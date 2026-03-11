@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>LIFE OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a; --bg4: #222222;
+  --border: #2a2a2a; --border2: #333333;
+  --text: #e8e8e8; --text2: #999999; --text3: #555555; --white: #ffffff;
+  --fin: #f0a500; --side: #00c896; --kar: #4d9fff; --fit: #ff6b4a;
+  --fam: #ff9de2; --free: #7ed6a7; --learn: #b44dff; --info: #666666;
+  --green: #00c896; --red: #ff4444; --yellow: #f0a500;
+  --radius: 4px; --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; overflow-x:hidden; }
+.app { display:flex; flex-direction:column; min-height:100vh; max-width:480px; margin:0 auto; }
+
+/* TOPBAR */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; background:var(--bg); }
+.topbar-logo { font-weight:800; font-size:18px; letter-spacing:4px; color:var(--white); }
+.topbar-date { font-family:var(--mono); font-size:11px; color:var(--text3); }
+
+/* NAV */
+.nav { display:flex; overflow-x:auto; gap:0; border-bottom:1px solid var(--border); scrollbar-width:none; }
+.nav::-webkit-scrollbar { display:none; }
+.nav-item { flex-shrink:0; padding:12px 16px; font-family:var(--mono); font-size:11px; letter-spacing:1px; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none; }
+.nav-item.active { color:var(--white); border-bottom-color:var(--white); }
+.nav-item:hover:not(.active) { color:var(--text2); }
+
+/* SCREENS */
+.screen { display:none; flex:1; padding:20px; animation:fadeIn 0.2s ease; }
+.screen.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+/* TYPOGRAPHY */
+.section-title { font-family:var(--mono); font-size:10px; letter-spacing:3px; color:var(--text3); text-transform:uppercase; margin-bottom:16px; }
+.page-title { font-size:24px; font-weight:800; color:var(--white); margin-bottom:4px; letter-spacing:-0.5px; }
+.page-sub { font-family:var(--mono); font-size:12px; color:var(--text2); margin-bottom:24px; }
+
+/* CARDS */
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.card-label { font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+.card-body { font-size:14px; color:var(--text2); line-height:1.6; }
+
+/* AREA COLORS */
+.color-fin { color:var(--fin); } .color-side { color:var(--side); } .color-kar { color:var(--kar); }
+.color-fit { color:var(--fit); } .color-fam { color:var(--fam); } .color-free { color:var(--free); }
+.color-learn { color:var(--learn); } .color-info { color:var(--info); }
+.bg-fin { background:rgba(240,165,0,0.12); } .bg-side { background:rgba(0,200,150,0.12); }
+.bg-kar { background:rgba(77,159,255,0.12); } .bg-fit { background:rgba(255,107,74,0.12); }
+.bg-fam { background:rgba(255,157,226,0.12); } .bg-free { background:rgba(126,214,167,0.12); }
+.bg-learn { background:rgba(180,77,255,0.12); } .bg-info { background:rgba(102,102,102,0.12); }
+
+/* INPUTS */
+.input-wrap { position:relative; margin-bottom:16px; }
+.input-label { font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:1px; margin-bottom:6px; display:block; }
+textarea, input[type="text"], select {
+  width:100%; background:var(--bg3); border:1px solid var(--border2);
+  color:var(--text); font-family:var(--sans); font-size:14px;
+  padding:12px; border-radius:var(--radius); resize:none; outline:none; transition:border-color 0.2s;
+}
+textarea { min-height:100px; padding-right:50px; }
+textarea:focus, input[type="text"]:focus, select:focus { border-color:var(--text3); }
+select { appearance:none; cursor:pointer; padding-right:12px; }
+select option { background:var(--bg3); }
+
+/* MIC BUTTON */
+.mic-btn {
+  position:absolute; right:10px; bottom:10px; width:34px; height:34px;
+  border-radius:50%; background:var(--bg4); border:1px solid var(--border2);
+  cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0;
+}
+.mic-btn.recording { background:rgba(255,70,70,0.2); border-color:var(--red); animation:micPulse 1s infinite; }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,70,70,0.3)} 50%{box-shadow:0 0 0 6px rgba(255,70,70,0)} }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border-radius:var(--radius); font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; letter-spacing:0.5px; }
+.btn-primary { background:var(--white); color:var(--bg); }
+.btn-primary:hover { background:#e0e0e0; }
+.btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+.btn-ghost:hover { border-color:var(--text3); color:var(--text); }
+.btn-full { width:100%; justify-content:center; }
+.btn-sm { padding:8px 14px; font-size:12px; }
+.btn-area { padding:10px 16px; font-size:12px; font-weight:600; border-radius:var(--radius); cursor:pointer; border:1px solid; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; opacity:0.5; }
+.btn-area.selected { opacity:1; }
+
+/* AI RESPONSE */
+.ai-response { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:16px; margin-top:16px; display:none; }
+.ai-response.visible { display:block; }
+.ai-header { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:2px; margin-bottom:12px; text-transform:uppercase; }
+.ai-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.ai-text { font-size:14px; color:var(--text); line-height:1.7; white-space:pre-wrap; }
+.ai-actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+
+/* LOADING */
+.loading-dots span { display:inline-block; width:4px; height:4px; border-radius:50%; background:var(--text3); margin:0 2px; animation:bounce 1.2s infinite; }
+.loading-dots span:nth-child(2){animation-delay:0.2s} .loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+/* DIVIDER */
+.divider { height:1px; background:var(--border); margin:20px 0; }
+
+/* EMPTY */
+.empty { text-align:center; padding:40px 20px; color:var(--text3); font-family:var(--mono); font-size:12px; }
+
+/* ANKER ROW */
+.anker-row { display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+.anker-row:last-child { border-bottom:none; }
+.anker-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+.anker-text { font-size:14px; color:var(--text); line-height:1.5; flex:1; }
+.anker-area-label { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* STAT ROW */
+.stat-row { display:flex; gap:12px; margin-bottom:12px; }
+.stat-box { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:12px; text-align:center; }
+.stat-val { font-family:var(--mono); font-size:22px; color:var(--white); font-weight:500; }
+.stat-label { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* LOG */
+.log-entry { padding:12px 0; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:flex-start; }
+.log-entry:last-child { border-bottom:none; }
+.log-date { font-family:var(--mono); font-size:10px; color:var(--text3); flex-shrink:0; padding-top:2px; }
+.log-content { flex:1; }
+.log-area-tag { font-family:var(--mono); font-size:10px; letter-spacing:1px; padding:2px 6px; border-radius:2px; display:inline-block; margin-bottom:4px; }
+.log-text { font-size:13px; color:var(--text2); line-height:1.5; }
+.log-decision { font-size:12px; margin-top:4px; }
+.log-decision.yes { color:var(--green); } .log-decision.later { color:var(--yellow); } .log-decision.no { color:var(--red); }
+
+/* AMPEL */
+.ampel-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.ampel-row:last-child { border-bottom:none; }
+.ampel-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.ampel-dot.green{background:var(--green)} .ampel-dot.yellow{background:var(--yellow)} .ampel-dot.red{background:var(--red)}
+.ampel-text { flex:1; font-size:13px; color:var(--text); }
+.ampel-status { font-family:var(--mono); font-size:11px; }
+.ampel-status.green{color:var(--green)} .ampel-status.yellow{color:var(--yellow)} .ampel-status.red{color:var(--red)}
+
+/* WEEK GRID */
+.week-grid { display:flex; gap:4px; margin-bottom:16px; }
+.week-day { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:8px 4px; text-align:center; cursor:pointer; transition:all 0.2s; min-height:70px; }
+.week-day.today { border-color:var(--white); }
+.week-day.selected { border-color:var(--text2); background:var(--bg4); }
+.week-day-name { font-family:var(--mono); font-size:9px; color:var(--text3); }
+.week-day-num { font-family:var(--mono); font-size:14px; color:var(--text); font-weight:500; margin:2px 0; }
+.week-day-dots { display:flex; flex-wrap:wrap; justify-content:center; gap:2px; margin-top:4px; }
+.week-day-dot { width:5px; height:5px; border-radius:50%; }
+
+/* DAY DETAIL */
+.day-entries { margin-bottom:16px; }
+.day-entry-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:20px; font-size:12px; font-weight:600;
+  margin:3px; cursor:pointer; border:none; transition:all 0.2s;
+}
+.day-entry-chip .chip-del { font-size:14px; opacity:0.6; margin-left:2px; }
+.day-entry-chip:active { opacity:0.7; }
+
+/* INFO CHIP */
+.info-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 10px; border-radius:20px; font-size:12px;
+  margin:3px; background:var(--bg4); color:var(--text2);
+  border:1px solid var(--border2); cursor:pointer;
+}
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; display:none; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--bg2); border-top:1px solid var(--border); border-radius:12px 12px 0 0; width:100%; max-width:480px; margin:0 auto; padding:24px 20px; max-height:85vh; overflow-y:auto; animation:slideUp 0.25s ease; position:relative; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-title { font-size:18px; font-weight:700; color:var(--white); margin-bottom:4px; }
+.modal-sub { font-family:var(--mono); font-size:11px; color:var(--text3); margin-bottom:20px; }
+.modal-close { position:absolute; top:16px; right:20px; background:var(--bg3); border:1px solid var(--border); color:var(--text2); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+
+/* SPORT COUNTDOWN */
+.countdown-card { display:flex; align-items:center; gap:12px; padding:12px 16px; margin-bottom:8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); }
+
+/* QUICK GRID */
+.quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.quick-btn { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:12px; text-align:left; cursor:pointer; transition:all 0.2s; }
+.quick-btn:hover { border-color:var(--border2); background:var(--bg4); }
+.quick-btn-icon { font-size:18px; margin-bottom:6px; }
+.quick-btn-text { font-size:12px; color:var(--text2); line-height:1.4; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">LIFE OS</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="nav-item active" onclick="showScreen('home')">HOME</button>
+    <button class="nav-item" onclick="showScreen('weekly')">WEEKLY</button>
+    <button class="nav-item" onclick="showScreen('sparring')">SPARRING</button>
+    <button class="nav-item" onclick="showScreen('log')">LOG</button>
+    <button class="nav-item" onclick="showScreen('settings')">SETUP</button>
+  </div>
+
+  <!-- ═══ HOME ═══ -->
+  <div class="screen active" id="screen-home">
+    <div class="section-title">HEUTE</div>
+    <div class="card" style="background:var(--bg3);border-color:var(--border2);margin-bottom:20px;">
+      <div class="card-label" style="color:var(--text3);">TAGES-FOKUS</div>
+      <div id="home-focus" class="card-body" style="color:var(--text);font-size:15px;line-height:1.6;">Lade...</div>
+    </div>
+
+    <!-- Heute's Einträge aus Wochenplanung -->
+    <div class="section-title">HEUTE GEPLANT</div>
+    <div id="home-today" class="card">
+      <div class="empty" style="padding:16px;">Keine Einträge heute</div>
+    </div>
+
+    <div class="section-title" style="margin-top:16px;">AKTIVE ANKER</div>
+    <div class="card" id="home-anker">
+      <div id="anker-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="openModal('modal-anker')">+ Anker bearbeiten</button>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">SCHNELL-AKTIONEN</div>
+    <div class="quick-grid">
+      <div class="quick-btn" onclick="showScreen('sparring');setTimeout(()=>setQuick('investment'),100)">
+        <div class="quick-btn-icon">💰</div><div class="quick-btn-text">Investment prüfen</div>
+      </div>
+      <div class="quick-btn" onclick="showScreen('sparring');setTimeout(()=>setQuick('training'),100)">
+        <div class="quick-btn-icon">🏊</div><div class="quick-btn-text">Trainingsplan</div>
+      </div>
+      <div class="quick-btn" onclick="showScreen('sparring');setTimeout(()=>setQuick('karriere'),100)">
+        <div class="quick-btn-icon">🏢</div><div class="quick-btn-text">Karriere-Sparring</div>
+      </div>
+      <div class="quick-btn" onclick="showScreen('sparring');setTimeout(()=>setQuick('sidehustle'),100)">
+        <div class="quick-btn-icon">🚀</div><div class="quick-btn-text">Side Hustle</div>
+      </div>
+    </div>
+
+    <div class="section-title">SPORT-COUNTDOWN</div>
+    <div id="sport-countdown"></div>
+  </div>
+
+  <!-- ═══ WEEKLY ═══ -->
+  <div class="screen" id="screen-weekly">
+    <div class="page-title">Weekly</div>
+    <div class="page-sub" id="weekly-kw">KW — · 2026</div>
+
+    <!-- Woche Grid -->
+    <div class="week-grid" id="week-grid"></div>
+
+    <!-- Tages-Detail -->
+    <div id="day-detail-section">
+      <div class="section-title" id="day-detail-title">WÄHLE EINEN TAG</div>
+      <div id="day-entries" class="day-entries">
+        <div class="empty" style="padding:16px 0;">Tippe auf einen Tag</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Wochen-Memo mit KI-Extraktion -->
+    <div class="section-title">WOCHEN-MEMO SPRECHEN</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6;">
+      Sprich deine ganze Woche ein — Büro/HO-Tage, Sport, Termine, Todos. Die KI verteilt alles automatisch auf die richtigen Tage.
+    </div>
+    <div class="input-wrap">
+      <textarea id="weekly-memo" placeholder="Z.B.: Montag und Mittwoch Büro, Dienstag Homeoffice Deep Work Karriere, Donnerstag früh Schwimmen, Freitag Portfolio-Check, Samstag langer Lauf 14km HM Vorbereitung, Sonntag Familie..." style="min-height:130px;"></textarea>
+      <button class="mic-btn" onclick="toggleVoice('weekly-memo',this)">🎤</button>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="processWeeklyMemo()" id="weekly-memo-btn">
+      Woche planen + verteilen
+    </button>
+    <div class="ai-response" id="weekly-memo-response">
+      <div class="ai-header"><div class="ai-dot"></div>KI-EXTRAKTION</div>
+      <div class="ai-text" id="weekly-memo-response-text"></div>
+      <div class="ai-actions">
+        <button class="btn btn-primary btn-sm" onclick="applyWeekPlan()">✓ In Woche übernehmen</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeAiResponse('weekly-memo-response')">Verwerfen</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Manuell hinzufügen -->
+    <div class="section-title">MANUELL HINZUFÜGEN</div>
+    <div class="card">
+      <div class="input-wrap" style="margin-bottom:8px;">
+        <label class="input-label">TAG</label>
+        <select id="manual-day">
+          <option value="0">Montag</option><option value="1">Dienstag</option>
+          <option value="2">Mittwoch</option><option value="3">Donnerstag</option>
+          <option value="4">Freitag</option><option value="5">Samstag</option><option value="6">Sonntag</option>
+        </select>
+      </div>
+      <div class="input-wrap" style="margin-bottom:8px;">
+        <label class="input-label">BEREICH</label>
+        <select id="manual-area">
+          <option value="fin">💰 Finanzen</option>
+          <option value="side">🚀 Side Hustle</option>
+          <option value="kar">🏢 Karriere</option>
+          <option value="fit">🏃 Sport & Fit</option>
+          <option value="fam">👨‍👩‍👧 Familie</option>
+          <option value="free">🎯 Freizeit</option>
+          <option value="learn">📚 Lernen</option>
+          <option value="info">📍 Info/Termin</option>
+        </select>
+      </div>
+      <div class="input-wrap" style="margin-bottom:12px;">
+        <label class="input-label">TÄTIGKEIT / INFO</label>
+        <div style="position:relative;">
+          <input type="text" id="manual-text" placeholder="Z.B. Schwimmen 45min" style="padding-right:48px;">
+          <button class="mic-btn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);bottom:auto;" onclick="toggleVoiceInput('manual-text',this)">🎤</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addManualEntry()">Hinzufügen</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Weekly Review -->
+    <div class="section-title">WEEKLY REVIEW</div>
+    <div class="card">
+      <div class="card-label" style="color:var(--text3);">AMPEL DIESE WOCHE</div>
+      <div id="weekly-ampel"><div class="empty">Noch keine Wochenanker</div></div>
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:12px;" onclick="generateWeeklyReview()">KI-Review generieren</button>
+    <div class="ai-response" id="weekly-review-response">
+      <div class="ai-header"><div class="ai-dot"></div>WEEKLY REVIEW</div>
+      <div class="ai-text" id="weekly-review-text"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SPARRING ═══ -->
+  <div class="screen" id="screen-sparring">
+    <div class="page-title">Sparring</div>
+    <div class="page-sub">KI bewertet gegen dein Regelwerk</div>
+    <div id="api-notice" class="card" style="background:rgba(240,165,0,0.1);border-color:rgba(240,165,0,0.3);display:none;margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--yellow);">⚠ Kein API Key — gehe zu SETUP</div>
+    </div>
+
+    <div class="section-title">BEREICH</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="btn-area selected" id="area-fin" style="color:var(--fin);border-color:var(--fin);background:rgba(240,165,0,0.08);" onclick="selectArea('fin')">💰 Finanzen</button>
+      <button class="btn-area" id="area-side" style="color:var(--side);border-color:var(--side);background:rgba(0,200,150,0.08);" onclick="selectArea('side')">🚀 Side Hustle</button>
+      <button class="btn-area" id="area-kar" style="color:var(--kar);border-color:var(--kar);background:rgba(77,159,255,0.08);" onclick="selectArea('kar')">🏢 Karriere</button>
+      <button class="btn-area" id="area-fit" style="color:var(--fit);border-color:var(--fit);background:rgba(255,107,74,0.08);" onclick="selectArea('fit')">🏃 Sport & Fit</button>
+    </div>
+
+    <div class="section-title">DEINE SITUATION / FRAGE</div>
+    <div class="input-wrap">
+      <textarea id="sparring-input" placeholder="Beschreibe die Situation oder stelle eine Frage. Tippen oder Mikrofon nutzen..." style="min-height:140px;"></textarea>
+      <button class="mic-btn" onclick="toggleVoice('sparring-input',this)">🎤</button>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="runSparring()" id="sparring-btn">Sparring starten</button>
+
+    <div class="ai-response" id="sparring-response" style="margin-top:16px;">
+      <div class="ai-header"><div class="ai-dot"></div><span id="sparring-response-area">KI-EMPFEHLUNG</span></div>
+      <div class="ai-text" id="sparring-response-text"></div>
+      <div class="ai-actions" id="sparring-actions">
+        <button class="btn btn-primary btn-sm" onclick="logDecision('yes')">✓ Umsetzen</button>
+        <button class="btn btn-ghost btn-sm" onclick="logDecision('later')">→ Später</button>
+        <button class="btn btn-ghost btn-sm" onclick="logDecision('no')">✕ Nicht umsetzen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LOG ═══ -->
+  <div class="screen" id="screen-log">
+    <div class="page-title">Log</div>
+    <div class="page-sub">Alle Entscheidungen + Einträge</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;">
+      <button class="btn btn-primary btn-sm" id="filter-all" onclick="filterLog('all')" style="flex-shrink:0;">Alle</button>
+      <button class="btn btn-ghost btn-sm" id="filter-fin" onclick="filterLog('fin')" style="flex-shrink:0;">Finanzen</button>
+      <button class="btn btn-ghost btn-sm" id="filter-kar" onclick="filterLog('kar')" style="flex-shrink:0;">Karriere</button>
+      <button class="btn btn-ghost btn-sm" id="filter-fit" onclick="filterLog('fit')" style="flex-shrink:0;">Sport</button>
+      <button class="btn btn-ghost btn-sm" id="filter-memo" onclick="filterLog('memo')" style="flex-shrink:0;">Memos</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-val" id="stat-total">0</div><div class="stat-label">EINTRÄGE</div></div>
+      <div class="stat-box"><div class="stat-val" id="stat-yes" style="color:var(--green)">0</div><div class="stat-label">UMGESETZT</div></div>
+      <div class="stat-box"><div class="stat-val" id="stat-this-week">0</div><div class="stat-label">DIESE WOCHE</div></div>
+    </div>
+    <div id="log-list"><div class="empty">Noch keine Einträge.</div></div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div class="screen" id="screen-settings">
+    <div class="page-title">Setup</div>
+    <div class="page-sub">API Key + Daten</div>
+
+    <div class="section-title">ANTHROPIC API KEY</div>
+    <div class="card">
+      <div class="card-body" style="font-size:13px;margin-bottom:12px;">Wird lokal in deinem Browser gespeichert — nicht übertragen.</div>
+      <div class="input-wrap" style="margin-bottom:12px;">
+        <label class="input-label">API KEY</label>
+        <input type="text" id="api-key-input" placeholder="sk-ant-...">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Speichern</button>
+      <span id="api-key-status" style="font-family:var(--mono);font-size:11px;color:var(--green);margin-left:12px;"></span>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">DATEN</div>
+    <div class="card">
+      <div class="card-body" style="font-size:13px;margin-bottom:16px;">Alle Daten lokal in deinem Browser.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Export JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">📥 Import JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">REGELWERK STATUS</div>
+    <div class="card">
+      <div class="ampel-row"><div class="ampel-dot green"></div><div class="ampel-text">Finanzen & Investment</div><div class="ampel-status green">AKTIV</div></div>
+      <div class="ampel-row"><div class="ampel-dot green"></div><div class="ampel-text">Side Hustles</div><div class="ampel-status green">AKTIV</div></div>
+      <div class="ampel-row"><div class="ampel-dot green"></div><div class="ampel-text">Karriere & Leadership</div><div class="ampel-status green">AKTIV</div></div>
+      <div class="ampel-row"><div class="ampel-dot green"></div><div class="ampel-text">Gesundheit & Sport</div><div class="ampel-status green">AKTIV</div></div>
+      <div class="ampel-row"><div class="ampel-dot green"></div><div class="ampel-text">Lernen & Entwicklung</div><div class="ampel-status green">AKTIV</div></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:8px;">Regelwerk v1.0 · März 2026 · Nächste Überarbeitung: Halbjährlich</div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-anker" onclick="closeModal('modal-anker')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal('modal-anker')">×</button>
+    <div class="modal-title">Anker verwalten</div>
+    <div class="modal-sub">Max. 3 aktive Anker gleichzeitig</div>
+    <div id="modal-anker-list"></div>
+    <div class="divider"></div>
+    <div class="input-wrap" style="margin-bottom:8px;">
+      <label class="input-label">NEUER ANKER</label>
+      <div style="position:relative;">
+        <input type="text" id="new-anker-text" placeholder="Z.B. HM Venlo Vorbereitung" style="padding-right:48px;">
+        <button class="mic-btn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);bottom:auto;" onclick="toggleVoiceInput('new-anker-text',this)">🎤</button>
+      </div>
+    </div>
+    <div class="input-wrap" style="margin-bottom:12px;">
+      <label class="input-label">BEREICH</label>
+      <select id="new-anker-area">
+        <option value="fin">💰 Finanzen</option>
+        <option value="side">🚀 Side Hustle</option>
+        <option value="kar">🏢 Karriere</option>
+        <option value="fit">🏃 Sport & Fit</option>
+        <option value="fam">👨‍👩‍👧 Familie</option>
+        <option value="free">🎯 Freizeit</option>
+        <option value="learn">📚 Lernen</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addAnker()">Anker hinzufügen</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════
+const STATE_KEY = 'lifeos_v2';
+const AREA_COLORS = { fin:'var(--fin)', side:'var(--side)', kar:'var(--kar)', fit:'var(--fit)', fam:'var(--fam)', free:'var(--free)', learn:'var(--learn)', info:'var(--info)' };
+const AREA_NAMES = { fin:'FINANZEN', side:'SIDE HUSTLE', kar:'KARRIERE', fit:'SPORT', fam:'FAMILIE', free:'FREIZEIT', learn:'LERNEN', info:'INFO', memo:'MEMO' };
+const AREA_EMOJIS = { fin:'💰', side:'🚀', kar:'🏢', fit:'🏃', fam:'👨‍👩‍👧', free:'🎯', learn:'📚', info:'📍' };
+const DAYS_DE = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const DAYS_FULL = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let state = {
+  anker: [
+    { id:1, text:'HM Venlo Vorbereitung', area:'fit' },
+    { id:2, text:'Transformation-Referenz bei Paki', area:'kar' },
+    { id:3, text:'Side Hustle Kanal Aufbau', area:'side' }
+  ],
+  weekPlan: {}, // { "2026-W11": { 0:[{text,area}], 1:[...], ... } }
+  log: [],
+  apiKey: '',
+  currentArea: 'fin',
+  lastSparringInput: '',
+  lastSparringResponse: '',
+  selectedDay: null,
+  _pendingWeekPlan: null
+};
+
+function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+function loadState() {
+  try {
+    const s = localStorage.getItem(STATE_KEY);
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+// REGELWERK
+// ═══════════════════════════════════════════
+const REGELWERK = `# LIFE OS REGELWERK v1.0
+
+## PROFIL
+- Alter: 39, Senior Manager Logistics Service, Paki Logistics (Faber Gruppe)
+- Team: 20+ Personen, Critical Leader im Transformation-Programm
+- Ziel: Finanziell frei mit 50-52
+- Zeit: ~10-15h/Woche außerhalb Job
+
+## FINANZ-REGELWERK
+- Ziel: 500k€ Depot bis 52, Rendite 10-12% p.a.
+- Sparrate: 1.000€/Monat + 50% Side Hustle Gewinne
+- Struktur: ETF-Sockel 25% | Compounder 35% | Thesen-Block 30% | Moonshots 10%
+- KAUFREGEL: Vor jedem Kauf: These + Zeithorizont + Verkaufstrigger. Kein Kauf ohne diese drei.
+- VERKAUFSREGEL: Nur bei Zielkurs / These gebrochen / monatlichem Review. Marktbewegungen allein = kein Verkaufsgrund.
+- Aktive Thesen: Bitcoin Bull Run (Strategy/Metaplanet), KI-Infrastruktur, Uran, Space
+- Täglich ins Depot schauen: VERBOTEN.
+
+## SIDE HUSTLE REGELWERK
+- Ziel: 1.000-2.000€/Monat bis Ende 2026, 50% ins Depot
+- Thema: Karriere, Führung, High-Performance — für ambitionierte Menschen
+- Kanal: TikTok + Instagram Reels, anonyme Persona
+- RED LINES: Kein echter Name/Gesicht. Kein Paki-Bezug. Kein Produkt vor 1.000 Followern.
+
+## KARRIERE-REGELWERK
+- Ziel: Director in 18-24 Monaten, CEO/COO mit Mitte 40
+- Strategie: Transformation-Referenz werden, Impact quantifizieren
+- Die eine Frage: "Macht diese Aktion meinen Impact größer und sichtbarer?"
+- RED LINES: Keine Politik die Vertrauen kostet. Director nie übergehen. Kein Move ohne Sparring.
+
+## GESUNDHEIT & SPORT
+- Floor: 7h Schlaf, Kraft min. 2x/Woche (NICHT OPTIONAL ab 39)
+- Aktive Anker: HM Venlo 29.03.26 | Triathlon olympisch Juli | Bergischer Hammer September
+- Schwimmen: Von 2 Bahnen auf 1km bis Juli
+- RED LINES: Kein Anker ohne Plan. Kein Training auf Kosten von Schlaf.
+
+## LERNEN
+- Immer verknüpft mit aktivem Bereich. Tiefe schlägt Breite.
+- Kein neues Thema solange 3 aktive Felder laufen.`;
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  const map = { home:0, weekly:1, sparring:2, log:3, settings:4 };
+  if (map[id] !== undefined) document.querySelectorAll('.nav-item')[map[id]].classList.add('active');
+  if (id === 'log') renderLog();
+  if (id === 'home') renderHome();
+  if (id === 'weekly') renderWeekly();
+  if (id === 'sparring') checkApiKey();
+}
+
+// ═══════════════════════════════════════════
+// WEEK HELPERS
+// ═══════════════════════════════════════════
+function getKW(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const y = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return { kw: Math.ceil((((d-y)/86400000)+1)/7), year: d.getUTCFullYear() };
+}
+function getWeekKey(date) { const {kw,year} = getKW(date); return `${year}-W${String(kw).padStart(2,'0')}`; }
+function getMondayOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  d.setDate(d.getDate() - day);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function getTodayDayIndex() {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function renderHome() {
+  const now = new Date();
+  document.getElementById('topbar-date').textContent = now.toLocaleDateString('de-DE', {weekday:'short',day:'2-digit',month:'2-digit'});
+
+  // Focus
+  const anker = state.anker[0];
+  const focusEl = document.getElementById('home-focus');
+  if (anker) {
+    focusEl.textContent = `${AREA_EMOJIS[anker.area] || ''} ${AREA_NAMES[anker.area]}: Was bringt dich heute auf "${anker.text}" voran?`;
+  } else {
+    focusEl.textContent = 'Setze deinen ersten Anker.';
+  }
+
+  // Heute geplant
+  const wk = getWeekKey(now);
+  const dayIdx = getTodayDayIndex();
+  const todayEntries = (state.weekPlan[wk] || {})[dayIdx] || [];
+  const todayEl = document.getElementById('home-today');
+  if (!todayEntries.length) {
+    todayEl.innerHTML = '<div class="empty" style="padding:16px;">Keine Einträge heute</div>';
+  } else {
+    todayEl.innerHTML = todayEntries.map(e => {
+      const col = AREA_COLORS[e.area] || 'var(--info)';
+      const bg = e.area ? `bg-${e.area}` : 'bg-info';
+      return `<span class="day-entry-chip ${bg}" style="color:${col};">${AREA_EMOJIS[e.area] || '📍'} ${e.text}</span>`;
+    }).join('');
+  }
+
+  renderAnkerList();
+  renderSportCountdown();
+}
+
+function renderAnkerList() {
+  const list = document.getElementById('anker-list');
+  if (!state.anker.length) { list.innerHTML = '<div class="empty">Keine aktiven Anker</div>'; return; }
+  list.innerHTML = state.anker.map(a => `
+    <div class="anker-row">
+      <div class="anker-dot" style="background:${AREA_COLORS[a.area] || 'var(--text3)'}"></div>
+      <div>
+        <div class="anker-text">${a.text}</div>
+        <div class="anker-area-label">${AREA_NAMES[a.area] || a.area}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderSportCountdown() {
+  const events = [
+    { name:'HM Venlo', date:new Date('2026-03-29'), emoji:'🏃' },
+    { name:'Triathlon Olympisch', date:new Date('2026-07-15'), emoji:'🏊' },
+    { name:'Bergischer Hammer', date:new Date('2026-09-20'), emoji:'🚴' }
+  ];
+  const now = new Date();
+  document.getElementById('sport-countdown').innerHTML = events.map(e => {
+    const days = Math.ceil((e.date - now) / 86400000);
+    const color = days < 30 ? 'var(--fit)' : days < 60 ? 'var(--yellow)' : 'var(--text2)';
+    return `<div class="countdown-card">
+      <div style="font-size:20px">${e.emoji}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--white)">${e.name}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">${e.date.toLocaleDateString('de-DE')}</div></div>
+      <div style="font-family:var(--mono);font-size:18px;font-weight:500;color:${color}">${days > 0 ? days+'d' : 'Heute!'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// WEEKLY
+// ═══════════════════════════════════════════
+function renderWeekly() {
+  const now = new Date();
+  const {kw} = getKW(now);
+  document.getElementById('weekly-kw').textContent = `KW ${kw} · ${now.getFullYear()}`;
+
+  const todayIdx = getTodayDayIndex();
+  const monday = getMondayOfWeek(now);
+  const wk = getWeekKey(now);
+  const plan = state.weekPlan[wk] || {};
+
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = DAYS_DE.map((d, i) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    const isToday = i === todayIdx;
+    const entries = plan[i] || [];
+    const dots = entries.slice(0,4).map(e =>
+      `<div class="week-day-dot" style="background:${AREA_COLORS[e.area] || 'var(--text3)'}"></div>`
+    ).join('');
+    const isSel = state.selectedDay === i;
+    return `<div class="week-day ${isToday?'today':''} ${isSel?'selected':''}" onclick="selectDay(${i})">
+      <div class="week-day-name">${d}</div>
+      <div class="week-day-num">${date.getDate()}</div>
+      <div class="week-day-dots">${dots}</div>
+    </div>`;
+  }).join('');
+
+  if (state.selectedDay !== null) renderDayDetail(state.selectedDay);
+  renderWeeklyAmpel();
+}
+
+function selectDay(idx) {
+  state.selectedDay = idx;
+  renderWeekly();
+  renderDayDetail(idx);
+}
+
+function renderDayDetail(idx) {
+  const now = new Date();
+  const wk = getWeekKey(now);
+  const plan = state.weekPlan[wk] || {};
+  const entries = plan[idx] || [];
+
+  document.getElementById('day-detail-title').textContent = DAYS_FULL[idx].toUpperCase();
+
+  const el = document.getElementById('day-entries');
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty" style="padding:12px 0;">Keine Einträge — spreche dein Wochen-Memo oder füge manuell hinzu</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map((e, i) => {
+    const col = AREA_COLORS[e.area] || 'var(--info)';
+    const bg = e.area ? `bg-${e.area}` : 'bg-info';
+    return `<span class="day-entry-chip ${bg}" style="color:${col};" onclick="removeEntry(${idx},${i})">
+      ${AREA_EMOJIS[e.area] || '📍'} ${e.text} <span class="chip-del">×</span>
+    </span>`;
+  }).join('');
+}
+
+function removeEntry(dayIdx, entryIdx) {
+  const wk = getWeekKey(new Date());
+  if (!state.weekPlan[wk]) return;
+  if (!state.weekPlan[wk][dayIdx]) return;
+  state.weekPlan[wk][dayIdx].splice(entryIdx, 1);
+  saveState();
+  renderWeekly();
+  renderDayDetail(dayIdx);
+  renderHome();
+}
+
+function addManualEntry() {
+  const dayIdx = parseInt(document.getElementById('manual-day').value);
+  const area = document.getElementById('manual-area').value;
+  const text = document.getElementById('manual-text').value.trim();
+  if (!text) return;
+
+  const wk = getWeekKey(new Date());
+  if (!state.weekPlan[wk]) state.weekPlan[wk] = {};
+  if (!state.weekPlan[wk][dayIdx]) state.weekPlan[wk][dayIdx] = [];
+  state.weekPlan[wk][dayIdx].push({ text, area });
+  saveState();
+  document.getElementById('manual-text').value = '';
+  renderWeekly();
+  renderHome();
+  state.selectedDay = dayIdx;
+  renderDayDetail(dayIdx);
+}
+
+function renderWeeklyAmpel() {
+  const now = new Date();
+  const monday = getMondayOfWeek(now);
+  monday.setHours(0,0,0,0);
+  const thisWeekLogs = state.log.filter(l => new Date(l.date) >= monday);
+  const hasKar = thisWeekLogs.some(l => l.area === 'kar');
+  const hasSide = thisWeekLogs.some(l => l.area === 'side');
+  const hasFit = thisWeekLogs.some(l => l.area === 'fit');
+  const hasFin = thisWeekLogs.some(l => l.area === 'fin');
+
+  const rows = [
+    { label:'Karriere / Paki', color:hasKar?'green':'yellow', status:hasKar?'AKTIV':'OFFEN' },
+    { label:'Finanzen', color:hasFin?'green':'yellow', status:hasFin?'AKTIV':'OFFEN' },
+    { label:'Side Hustle', color:hasSide?'green':'yellow', status:hasSide?'AKTIV':'OFFEN' },
+    { label:'Sport', color:hasFit?'green':'yellow', status:hasFit?'AKTIV':'OFFEN' }
+  ];
+
+  document.getElementById('weekly-ampel').innerHTML = rows.map(r => `
+    <div class="ampel-row">
+      <div class="ampel-dot ${r.color}"></div>
+      <div class="ampel-text">${r.label}</div>
+      <div class="ampel-status ${r.color}">${r.status}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// WOCHEN-MEMO KI-EXTRAKTION
+// ═══════════════════════════════════════════
+async function processWeeklyMemo() {
+  const memo = document.getElementById('weekly-memo').value.trim();
+  if (!memo) return;
+  if (!state.apiKey) { checkApiKey(); return; }
+
+  const btn = document.getElementById('weekly-memo-btn');
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+
+  const prompt = `Du bist ein Wochenplaner-Assistent. Extrahiere aus dem folgenden Sprach-Memo alle Tätigkeiten, Termine und Infos und ordne sie den Wochentagen zu.
+
+Verfügbare Bereiche: fin (Finanzen), side (Side Hustle), kar (Karriere), fit (Sport/Fitness), fam (Familie), free (Freizeit), learn (Lernen), info (Info/Termin ohne Bereich)
+
+Antworte NUR mit einem JSON-Array, kein anderer Text, keine Erklärung, keine Markdown-Backticks.
+Format: [{"day":0,"text":"Büro","area":"kar"},{"day":2,"text":"Schwimmen 45min","area":"fit"}]
+day: 0=Montag, 1=Dienstag, 2=Mittwoch, 3=Donnerstag, 4=Freitag, 5=Samstag, 6=Sonntag
+
+Memo: "${memo}"`;
+
+  const result = await callClaude(prompt, 500);
+
+  btn.innerHTML = 'Woche planen + verteilen';
+  btn.disabled = false;
+
+  // Parse JSON
+  try {
+    const clean = result.replace(/```json|```/g, '').trim();
+    const entries = JSON.parse(clean);
+    state._pendingWeekPlan = entries;
+
+    // Show preview
+    const preview = entries.map(e => `${DAYS_DE[e.day]}: ${AREA_EMOJIS[e.area] || '📍'} ${e.text}`).join('\n');
+    document.getElementById('weekly-memo-response-text').textContent = `${entries.length} Einträge extrahiert:\n\n${preview}`;
+    document.getElementById('weekly-memo-response').classList.add('visible');
+  } catch(err) {
+    document.getElementById('weekly-memo-response-text').textContent = 'Fehler beim Verarbeiten. Bitte nochmal versuchen.\n\n' + result;
+    document.getElementById('weekly-memo-response').classList.add('visible');
+  }
+}
+
+function applyWeekPlan() {
+  if (!state._pendingWeekPlan) return;
+  const wk = getWeekKey(new Date());
+  if (!state.weekPlan[wk]) state.weekPlan[wk] = {};
+
+  state._pendingWeekPlan.forEach(e => {
+    const idx = parseInt(e.day);
+    if (isNaN(idx) || idx < 0 || idx > 6) return;
+    if (!state.weekPlan[wk][idx]) state.weekPlan[wk][idx] = [];
+    state.weekPlan[wk][idx].push({ text: e.text, area: e.area });
+  });
+
+  saveState();
+  state._pendingWeekPlan = null;
+  document.getElementById('weekly-memo').value = '';
+  document.getElementById('weekly-memo-response').classList.remove('visible');
+  renderWeekly();
+  renderHome();
+  if (state.selectedDay !== null) renderDayDetail(state.selectedDay);
+}
+
+async function generateWeeklyReview() {
+  if (!state.apiKey) { checkApiKey(); return; }
+
+  const now = new Date();
+  const monday = getMondayOfWeek(now);
+  monday.setHours(0,0,0,0);
+  const thisWeekLogs = state.log.filter(l => new Date(l.date) >= monday);
+  const wk = getWeekKey(now);
+  const plan = state.weekPlan[wk] || {};
+  const planSummary = Object.entries(plan).map(([day,entries]) =>
+    `${DAYS_FULL[day]}: ${entries.map(e=>e.text).join(', ')}`
+  ).join('\n');
+
+  const prompt = `${REGELWERK}
+
+Wochenplan:
+${planSummary || 'Nicht gesetzt'}
+
+Log-Einträge diese Woche (${thisWeekLogs.length}):
+${thisWeekLogs.map(l=>`- [${l.area}] ${l.input} → ${l.decision||'kein Beschluss'}`).join('\n')||'Keine'}
+
+Erstelle einen Weekly Review:
+1. Ampel pro Regelwerk-Bereich (GRÜN/GELB/ROT) mit kurzem Kommentar
+2. Was lief gut?
+3. Was driftet?
+4. Eine konkrete Empfehlung für nächste Woche
+
+Max. 250 Wörter. Direkt und ehrlich. Auf Deutsch.`;
+
+  const btn = document.querySelector('[onclick="generateWeeklyReview()"]');
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+
+  const result = await callClaude(prompt);
+  btn.innerHTML = 'KI-Review generieren';
+  btn.disabled = false;
+
+  document.getElementById('weekly-review-text').textContent = result;
+  document.getElementById('weekly-review-response').classList.add('visible');
+}
+
+// ═══════════════════════════════════════════
+// ANKER
+// ═══════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-anker') renderModalAnker();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function renderModalAnker() {
+  const list = document.getElementById('modal-anker-list');
+  list.innerHTML = state.anker.map((a,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="width:8px;height:8px;border-radius:50%;background:${AREA_COLORS[a.area]};flex-shrink:0;"></div>
+      <div style="flex:1;font-size:14px;">${a.text}</div>
+      <button onclick="removeAnker(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;">×</button>
+    </div>`).join('') || '<div class="empty">Keine Anker</div>';
+}
+
+function addAnker() {
+  const text = document.getElementById('new-anker-text').value.trim();
+  const area = document.getElementById('new-anker-area').value;
+  if (!text) return;
+  if (state.anker.length >= 3) { alert('Max. 3 Anker — WIP-Cap'); return; }
+  state.anker.push({ id:Date.now(), text, area });
+  saveState();
+  document.getElementById('new-anker-text').value = '';
+  renderModalAnker();
+  renderAnkerList();
+}
+
+function removeAnker(i) {
+  state.anker.splice(i, 1);
+  saveState();
+  renderModalAnker();
+  renderAnkerList();
+}
+
+// ═══════════════════════════════════════════
+// SPARRING
+// ═══════════════════════════════════════════
+function selectArea(area) {
+  state.currentArea = area;
+  document.querySelectorAll('.btn-area').forEach(b => b.classList.remove('selected'));
+  document.getElementById('area-' + area)?.classList.add('selected');
+}
+
+function setQuick(type) {
+  const map = {
+    investment: { area:'fin', text:'Analysiere mein Portfolio — bin ich auf dem richtigen Weg zu 500k€ bis 52? Was würdest du heute umschichten?' },
+    training: { area:'fit', text:'Erstelle einen Schwimmtrainingsplan für April. Aktuell: 2 Bahnen dann Pause. Ziel: 1km non-stop bis Mitte Juli für den Triathlon.' },
+    karriere: { area:'kar', text:'' },
+    sidehustle: { area:'side', text:'' }
+  };
+  const q = map[type];
+  if (!q) return;
+  selectArea(q.area);
+  document.getElementById('sparring-input').value = q.text;
+  document.getElementById('sparring-input').focus();
+}
+
+async function runSparring() {
+  const input = document.getElementById('sparring-input').value.trim();
+  if (!input) return;
+  if (!state.apiKey) { checkApiKey(); return; }
+
+  const areaLabels = { fin:'FINANZEN', side:'SIDE HUSTLE', kar:'KARRIERE', fit:'SPORT & GESUNDHEIT' };
+  const areaPrompts = {
+    fin: 'Du bist Finanz-Sparringspartner. Bewerte Investment-Entscheidungen gegen das Regelwerk. Gib Empfehlung: INVEST / WATCH / NICHT JETZT. Wenn Kauf: nenne die drei Pflichtfelder (These, Zeithorizont, Verkaufstrigger).',
+    side: 'Du bist Side Hustle Berater. Bewerte gegen das Regelwerk. Prüfe: Anonym genug? Richtige Stufe? Passt zum Thema?',
+    kar: 'Du bist Karriere-Sparringspartner. Bewerte gegen das Regelwerk. Output-Prinzip anwenden. Klare Empfehlung + nächster Schritt.',
+    fit: 'Du bist Sport & Fitness Coach. Erstelle Pläne oder bewerte Entscheidungen. Berücksichtige aktuelle Fitness, aktive Anker, Krafttraining-Pflicht.'
+  };
+
+  const btn = document.getElementById('sparring-btn');
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+  state.lastSparringInput = input;
+
+  const prompt = `${REGELWERK}
+
+ROLLE: ${areaPrompts[state.currentArea] || areaPrompts.kar}
+BEREICH: ${areaLabels[state.currentArea]}
+ANFRAGE: ${input}
+
+Antworte präzise auf Deutsch. Max. 300 Wörter. Klare Struktur. Eindeutige Empfehlung am Ende.`;
+
+  const result = await callClaude(prompt);
+  state.lastSparringResponse = result;
+  btn.innerHTML = 'Sparring starten';
+  btn.disabled = false;
+
+  document.getElementById('sparring-response-area').textContent = areaLabels[state.currentArea] || 'KI-EMPFEHLUNG';
+  document.getElementById('sparring-response-text').textContent = result;
+  document.getElementById('sparring-response').classList.add('visible');
+  document.getElementById('sparring-actions').style.display = 'flex';
+}
+
+function logDecision(decision) {
+  const labels = { yes:'✓ Umsetzen', later:'→ Später', no:'✕ Nicht umsetzen' };
+  addLog({ area:state.currentArea, input:state.lastSparringInput, response:state.lastSparringResponse, decision:labels[decision], type:'sparring' });
+  document.getElementById('sparring-actions').innerHTML = `<div style="font-family:var(--mono);font-size:11px;color:var(--green);">✓ Geloggt: ${labels[decision]}</div>`;
+}
+
+// ═══════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════
+function addLog(entry) {
+  state.log.unshift({ id:Date.now(), date:new Date().toISOString(), ...entry });
+  if (state.log.length > 200) state.log = state.log.slice(0,200);
+  saveState();
+}
+
+let currentFilter = 'all';
+function filterLog(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('[id^="filter-"]').forEach(b => { b.style.background='transparent'; b.style.color='var(--text2)'; b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+  const active = document.getElementById('filter-' + filter);
+  if (active) { active.style.background='var(--white)'; active.style.color='var(--bg)'; }
+  renderLog();
+}
+
+function renderLog() {
+  const filtered = currentFilter === 'all' ? state.log : state.log.filter(l => l.area === currentFilter);
+  const now = new Date();
+  const monday = getMondayOfWeek(now);
+  monday.setHours(0,0,0,0);
+  document.getElementById('stat-total').textContent = state.log.length;
+  document.getElementById('stat-yes').textContent = state.log.filter(l=>l.decision&&l.decision.includes('Umsetzen')).length;
+  document.getElementById('stat-this-week').textContent = state.log.filter(l=>new Date(l.date)>=monday).length;
+
+  const list = document.getElementById('log-list');
+  if (!filtered.length) { list.innerHTML = '<div class="empty">Keine Einträge</div>'; return; }
+
+  const decisionColors = { '✓ Umsetzen':'yes', '→ Später':'later', '✕ Nicht umsetzen':'no' };
+  list.innerHTML = filtered.map(l => {
+    const date = new Date(l.date);
+    const dc = l.decision ? (decisionColors[l.decision]||'') : '';
+    return `<div class="log-entry">
+      <div class="log-date">${date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}<br>${date.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="log-content">
+        <div class="log-area-tag bg-${l.area||'memo'} color-${l.area||'memo'}">${AREA_NAMES[l.area]||'MEMO'}</div>
+        <div class="log-text">${l.input?(l.input.length>120?l.input.slice(0,120)+'...':l.input):''}</div>
+        ${l.response?`<div class="log-text" style="margin-top:4px;color:var(--text3);font-size:12px;">${l.response.slice(0,100)}...</div>`:''}
+        ${l.decision?`<div class="log-decision ${dc}">${l.decision}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// VOICE
+// ═══════════════════════════════════════════
+let activeRecognition = null;
+
+function toggleVoice(targetId, btn) {
+  if (activeRecognition) {
+    activeRecognition.stop();
+    activeRecognition = null;
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    return;
+  }
+  startVoice(targetId, btn);
+}
+
+function toggleVoiceInput(targetId, btn) {
+  if (activeRecognition) {
+    activeRecognition.stop();
+    activeRecognition = null;
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    return;
+  }
+  startVoice(targetId, btn);
+}
+
+function startVoice(targetId, btn) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Spracheingabe nicht verfügbar. Bitte Safari verwenden.'); return; }
+
+  const recognition = new SR();
+  recognition.lang = 'de-DE';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  const field = document.getElementById(targetId);
+  const originalText = field.value;
+  let finalText = originalText;
+
+  btn.textContent = '⏹';
+  btn.classList.add('recording');
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    finalText = originalText;
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    field.value = finalText + interim;
+  };
+
+  recognition.onerror = recognition.onend = () => {
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    activeRecognition = null;
+  };
+
+  recognition.start();
+  activeRecognition = recognition;
+}
+
+// ═══════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════
+async function callClaude(prompt, maxTokens = 1000) {
+  if (!state.apiKey) return 'Kein API Key gesetzt. Gehe zu SETUP.';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':state.apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    if (data.error) return `Fehler: ${data.error.message}`;
+    return data.content?.[0]?.text || 'Keine Antwort.';
+  } catch(e) { return `Verbindungsfehler: ${e.message}`; }
+}
+
+function checkApiKey() {
+  const notice = document.getElementById('api-notice');
+  if (notice) notice.style.display = state.apiKey ? 'none' : 'block';
+}
+
+function closeAiResponse(id) { document.getElementById(id)?.classList.remove('visible'); }
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function saveApiKey() {
+  state.apiKey = document.getElementById('api-key-input').value.trim();
+  saveState();
+  document.getElementById('api-key-status').textContent = state.apiKey ? '✓ Gespeichert' : '';
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lifeos_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      state = { ...state, ...JSON.parse(ev.target.result) };
+      saveState(); alert('Import erfolgreich!'); renderHome();
+    } catch { alert('Fehler beim Import'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+loadState();
+if (state.apiKey) {
+  setTimeout(() => {
+    const input = document.getElementById('api-key-input');
+    if (input) input.value = state.apiKey;
+  }, 100);
+}
+renderHome();
+</script>
+</body>
+</html>
