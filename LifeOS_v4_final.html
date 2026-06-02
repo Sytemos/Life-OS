@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>LIFE OS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --border: #222222;
+  --text: #e8e8e8;
+  --text-dim: #555555;
+  --text-mid: #888888;
+  --koerper: #39FF14;
+  --fuehrung: #ffffff;
+  --familie: #D4A853;
+  --aufbau: #C9A84C;
+  --venture: #00D4FF;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; height:100%; overflow:hidden; }
+
+#app { display:flex; flex-direction:column; height:100vh; height:100dvh; }
+
+/* HEADER */
+#header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+#logo { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; letter-spacing:0.3em; color:var(--text-dim); }
+#header-center { font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+#header-icons { display:flex; gap:14px; align-items:center; }
+.header-icon { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:18px; padding:4px; }
+#sync-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); transition:background 0.3s; }
+#sync-dot.ok { background:#39FF14; }
+#sync-dot.error { background:#ff4444; }
+#sync-dot.syncing { background:#ffaa00; animation:pulse 0.8s infinite; }
+
+/* CONTENT */
+#content { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+#content::-webkit-scrollbar { display:none; }
+
+/* SCREENS */
+.screen { display:none; }
+.screen.active { display:block; }
+
+/* WELTEN BAR */
+#welten-bar { display:none; border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; scrollbar-width:none; }
+#welten-bar.visible { display:flex; }
+#welten-bar::-webkit-scrollbar { display:none; }
+.welt-tab { flex:1; min-width:58px; padding:10px 4px; background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.08em; color:var(--text-dim); text-align:center; transition:all 0.2s; text-transform:uppercase; }
+.welt-tab .we { display:block; font-size:17px; margin-bottom:3px; filter:grayscale(1); transition:filter 0.2s; }
+.welt-tab.active .we { filter:grayscale(0); }
+.welt-tab[data-w="koerper"].active { border-bottom-color:var(--koerper); color:var(--koerper); }
+.welt-tab[data-w="fuehrung"].active { border-bottom-color:var(--fuehrung); color:var(--fuehrung); }
+.welt-tab[data-w="familie"].active { border-bottom-color:var(--familie); color:var(--familie); }
+.welt-tab[data-w="aufbau"].active { border-bottom-color:var(--aufbau); color:var(--aufbau); }
+.welt-tab[data-w="venture"].active { border-bottom-color:var(--venture); color:var(--venture); }
+
+/* FEATURE TABS */
+#feature-tabs { display:none; border-bottom:1px solid var(--border); flex-shrink:0; }
+#feature-tabs.visible { display:flex; }
+.ftab { flex:1; padding:9px 4px; background:none; border:none; border-bottom:1px solid transparent; cursor:pointer; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.08em; color:var(--text-dim); text-transform:uppercase; transition:all 0.2s; }
+.ftab.active { color:var(--text); border-bottom-color:var(--text); }
+
+/* BOTTOM NAV */
+#bottom-nav { display:flex; border-top:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+.nav-btn { flex:1; padding:10px 4px 14px; background:none; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
+.nav-icon { font-size:19px; filter:grayscale(1); opacity:0.4; transition:all 0.2s; }
+.nav-label { font-family:'Space Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.08em; text-transform:uppercase; transition:all 0.2s; }
+.nav-btn.active .nav-icon { filter:grayscale(0); opacity:1; }
+.nav-btn.active .nav-label { color:var(--text); }
+
+/* CARDS & INPUTS */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+.card-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:8px; }
+.pad { padding:20px; }
+.section-title { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.3em; text-transform:uppercase; margin-bottom:14px; }
+.divider { height:1px; background:var(--border); margin:20px 0; }
+
+textarea, input[type=text], input[type=password], input[type=date] {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:11px 13px; color:var(--text); font-family:'Syne',sans-serif; font-size:14px;
+  outline:none; width:100%;
+}
+textarea { resize:none; line-height:1.6; }
+textarea::placeholder, input::placeholder { color:var(--text-dim); }
+input[type=date] { font-family:'Space Mono',monospace; font-size:12px; }
+
+.btn { border:none; border-radius:10px; padding:10px 18px; font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+.btn-primary { background:var(--text); color:var(--bg); }
+.btn-secondary { background:var(--surface); border:1px solid var(--border); color:var(--text-mid); }
+.btn-full { width:100%; padding:13px; }
+.btn:active { transform:scale(0.96); }
+
+.mic-btn { background:none; border:1px solid var(--border); border-radius:20px; padding:7px 14px; color:var(--text-dim); font-family:'Space Mono',monospace; font-size:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s; }
+.mic-btn.recording { border-color:#ff4444; color:#ff4444; animation:pulse 1s infinite; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.status-row { display:flex; align-items:center; gap:8px; margin-top:6px; }
+.sdot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); display:inline-block; }
+.sdot.ok { background:#39FF14; }
+.sdot.error { background:#ff4444; }
+.slabel { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); }
+
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-dim); font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.1em; line-height:1.8; }
+.empty-icon { font-size:30px; margin-bottom:10px; display:block; filter:grayscale(1); opacity:0.4; }
+
+/* ═══ HOME ═══ */
+.home-date { padding:20px 20px 0; font-family:'Space Mono',monospace; font-size:11px; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; }
+.home-greeting { padding:8px 20px 20px; font-size:24px; font-weight:800; letter-spacing:-0.02em; }
+.quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.qa { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s; }
+.qa:active { transform:scale(0.97); }
+.qa-emoji { font-size:20px; margin-bottom:6px; display:block; }
+.qa-label { font-size:13px; font-weight:700; display:block; }
+.qa-sub { font-size:10px; color:var(--text-dim); margin-top:2px; display:block; font-family:'Space Mono',monospace; }
+.entry-preview { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:13px; line-height:1.5; color:var(--text-mid); margin-bottom:8px; cursor:pointer; }
+.entry-meta { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.1em; margin-bottom:4px; text-transform:uppercase; }
+
+/* ═══ ONBOARDING ═══ */
+#onboarding { position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column; padding:40px 24px; }
+.ob-step { display:none; flex-direction:column; gap:16px; flex:1; }
+.ob-step.active { display:flex; }
+.ob-title { font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.2; }
+.ob-sub { font-size:14px; color:var(--text-mid); line-height:1.6; }
+.ob-progress { display:flex; gap:6px; margin-bottom:20px; }
+.ob-dot { height:3px; flex:1; background:var(--border); border-radius:2px; transition:background 0.3s; }
+.ob-dot.done { background:var(--text); }
+
+/* ═══ SPARRING ═══ */
+#sparring-wrap { display:flex; flex-direction:column; height:calc(100dvh - 200px); }
+.sparring-header { padding:12px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.mentor-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:3px; }
+.mentor-name { font-size:15px; font-weight:700; }
+.mentor-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.mbtn { padding:5px 12px; border-radius:16px; border:1px solid var(--border); background:none; color:var(--text-dim); font-family:'Space Mono',monospace; font-size:9px; cursor:pointer; transition:all 0.2s; }
+.mbtn.active { background:var(--surface2); color:var(--text); border-color:var(--text-mid); }
+#chat-msgs { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:12px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+#chat-msgs::-webkit-scrollbar { display:none; }
+.msg { max-width:86%; animation:fadeUp 0.3s ease; }
+.msg.user { align-self:flex-end; }
+.msg.ai { align-self:flex-start; }
+.msg-bubble { padding:11px 15px; border-radius:16px; font-size:14px; line-height:1.6; }
+.msg.user .msg-bubble { background:var(--surface2); border:1px solid var(--border); border-bottom-right-radius:4px; }
+.msg.ai .msg-bubble { background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.msg-time { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); margin-top:3px; }
+.msg.user .msg-time { text-align:right; }
+.typing { display:flex; gap:4px; padding:12px 15px; background:var(--surface); border:1px solid var(--border); border-radius:16px; border-bottom-left-radius:4px; width:fit-content; align-self:flex-start; }
+.tdot { width:6px; height:6px; background:var(--text-dim); border-radius:50%; animation:typing 1.2s infinite; }
+.tdot:nth-child(2){animation-delay:0.2s} .tdot:nth-child(3){animation-delay:0.4s}
+@keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-5px);opacity:1} }
+.quick-prompts { padding:8px 14px; display:flex; gap:7px; flex-shrink:0; overflow-x:auto; scrollbar-width:none; border-top:1px solid var(--border); }
+.quick-prompts::-webkit-scrollbar { display:none; }
+.qp { white-space:nowrap; padding:6px 11px; border-radius:14px; border:1px solid var(--border); background:none; color:var(--text-dim); font-family:'Space Mono',monospace; font-size:9px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+.qp:active { background:var(--surface); color:var(--text); }
+#chat-input-bar { padding:10px 14px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end; flex-shrink:0; background:var(--bg); }
+#chat-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:9px 14px; color:var(--text); font-family:'Syne',sans-serif; font-size:14px; resize:none; max-height:90px; outline:none; line-height:1.4; }
+#chat-input::placeholder { color:var(--text-dim); }
+.cbtn { width:38px; height:38px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; transition:all 0.2s; }
+.cbtn.primary { background:var(--text); border-color:var(--text); color:var(--bg); }
+.cbtn:active { transform:scale(0.92); }
+.cbtn.recording { border-color:#ff4444; color:#ff4444; }
+
+/* ═══ JOURNAL / IDEEN ═══ */
+.input-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:16px; }
+.input-card textarea { border:none; border-radius:0; padding:14px; min-height:90px; }
+.input-footer { display:flex; justify-content:space-between; align-items:center; padding:9px 13px; border-top:1px solid var(--border); }
+.entry-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; position:relative; }
+.entry-date { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.15em; text-transform:uppercase; margin-bottom:6px; }
+.entry-text { font-size:14px; line-height:1.6; }
+.del-btn { position:absolute; top:10px; right:10px; background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; padding:4px; }
+.idee-titel { font-size:14px; font-weight:700; margin-bottom:4px; }
+.idee-text { font-size:13px; color:var(--text-mid); line-height:1.5; }
+
+/* ═══ REGELWERK ═══ */
+.rw-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:12px; }
+.rw-card textarea { border:none; border-radius:0; min-height:120px; }
+.rw-footer { padding:9px 13px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+
+/* ═══ NORTH STARS ═══ */
+.ns-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:14px; position:relative; }
+.ns-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.ns-y1::before { background:var(--venture); }
+.ns-y2::before { background:var(--koerper); }
+.ns-y5::before { background:var(--aufbau); }
+.ns-y10::before { background:var(--fuehrung); }
+.ns-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; padding:13px 14px 0; }
+.ns-card textarea { border:none; border-radius:0; min-height:70px; padding:8px 14px 14px; }
+
+/* ═══ KALENDER ═══ */
+.kal-add { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.kal-row { display:flex; gap:8px; }
+.kal-item { display:flex; align-items:center; gap:10px; padding:11px 13px; background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:7px; }
+.kal-date { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); min-width:75px; }
+.kal-text { flex:1; font-size:14px; }
+.kal-del { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; }
+.kal-group-title { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-bottom:9px; margin-top:18px; }
+
+/* ═══ REVIEW ═══ */
+.review-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px; }
+.review-result { font-size:14px; line-height:1.7; color:var(--text); white-space:pre-wrap; }
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--text); border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px; }
+
+/* ═══ SETUP ═══ */
+.setup-section { margin-bottom:24px; }
+.setup-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:0.25em; text-transform:uppercase; margin-bottom:6px; }
+.setup-desc { font-size:12px; color:var(--text-mid); margin-bottom:8px; line-height:1.5; }
+.setup-input { margin-bottom:7px; }
+.mentor-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.mentor-item { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.mentor-item-label { font-family:'Space Mono',monospace; font-size:8px; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:5px; }
+.mentor-item input { background:none; border:none; color:var(--text); font-family:'Syne',sans-serif; font-size:13px; font-weight:600; outline:none; width:100%; padding:0; border-radius:0; }
+
+/* TOAST */
+#toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--text); color:var(--bg); padding:9px 18px; border-radius:18px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.1em; opacity:0; transition:all 0.3s; pointer-events:none; z-index:9999; white-space:nowrap; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ONBOARDING -->
+  <div id="onboarding" style="display:none;">
+    <div class="ob-progress" id="ob-progress"></div>
+    <div class="ob-step active" id="ob-0">
+      <div class="ob-title">Willkommen bei<br>Life OS.</div>
+      <div class="ob-sub">Dein persönliches Betriebssystem. Bevor du startest, richten wir einmal alles ein. Dauert 3 Minuten.</div>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-full" onclick="obNext()">Los geht's →</button>
+    </div>
+    <div class="ob-step" id="ob-1">
+      <div class="ob-title">API Keys</div>
+      <div class="ob-sub">Für KI-Funktionen und Datenspeicherung.</div>
+      <div>
+        <div class="setup-label" style="margin-bottom:6px;">Anthropic API Key</div>
+        <input type="password" id="ob-api" placeholder="sk-ant-..." class="setup-input">
+        <div class="setup-label" style="margin-bottom:6px; margin-top:12px;">GitHub Token</div>
+        <input type="password" id="ob-token" placeholder="ghp_..." class="setup-input">
+        <div class="setup-label" style="margin-bottom:6px; margin-top:12px;">Gist ID</div>
+        <input type="text" id="ob-gist" placeholder="614bbaf5158ed11b8143dfa8566a6d9e" class="setup-input">
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-full" onclick="obNext()">Weiter →</button>
+    </div>
+    <div class="ob-step" id="ob-2">
+      <div class="ob-title">Dein Profil</div>
+      <div class="ob-sub">Wer bist du? Was beschäftigt dich gerade? Das ist die Grundlage für sinnvolles Sparring.</div>
+      <textarea id="ob-profil" rows="7" placeholder="Ich bin Pat, Senior Manager bei..."></textarea>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-full" onclick="obNext()">Weiter →</button>
+    </div>
+    <div class="ob-step" id="ob-3">
+      <div class="ob-title">Deine North Stars</div>
+      <div class="ob-sub">Wo willst du hin? Grob reicht — du kannst es später anpassen.</div>
+      <textarea id="ob-ns" rows="7" placeholder="2026: Triathlon Bochum...&#10;2027: 1.000 Follower...&#10;2032: Solopreneur...&#10;2036: Finanzielle Freiheit..."></textarea>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-full" onclick="obNext()">Weiter →</button>
+    </div>
+    <div class="ob-step" id="ob-4">
+      <div class="ob-title">Globaler Status</div>
+      <div class="ob-sub">Was sind die 3-5 wichtigsten Themen die gerade alle Bereiche deines Lebens beeinflussen?</div>
+      <textarea id="ob-status" rows="5" placeholder="Triathlon Juli 2026 ist der sportliche Anker..."></textarea>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-full" onclick="obFinish()">Life OS starten ✓</button>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="logo">LIFE OS</div>
+    <div id="header-center">—</div>
+    <div id="header-icons">
+      <div id="sync-dot"></div>
+      <button class="header-icon" onclick="showNav('setup')">⚙</button>
+    </div>
+  </div>
+
+  <!-- WELTEN BAR -->
+  <div id="welten-bar">
+    <button class="welt-tab active" data-w="koerper" onclick="selectWelt('koerper')"><span class="we">💪</span>Körper</button>
+    <button class="welt-tab" data-w="fuehrung" onclick="selectWelt('fuehrung')"><span class="we">🏢</span>Führung</button>
+    <button class="welt-tab" data-w="familie" onclick="selectWelt('familie')"><span class="we">👨‍👩‍👧</span>Familie</button>
+    <button class="welt-tab" data-w="aufbau" onclick="selectWelt('aufbau')"><span class="we">💰</span>Aufbau</button>
+    <button class="welt-tab" data-w="venture" onclick="selectWelt('venture')"><span class="we">⚡</span>Venture</button>
+  </div>
+
+  <!-- FEATURE TABS -->
+  <div id="feature-tabs">
+    <button class="ftab active" data-f="sparring" onclick="selectFeature('sparring')">Sparring</button>
+    <button class="ftab" data-f="journal" onclick="selectFeature('journal')">Journal</button>
+    <button class="ftab" data-f="ideen" onclick="selectFeature('ideen')">Ideen</button>
+    <button class="ftab" data-f="regelwerk" onclick="selectFeature('regelwerk')">Regelwerk</button>
+    <button class="ftab" data-f="memory" onclick="selectFeature('memory')">Memory</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- HOME -->
+    <div id="home-screen" class="screen active">
+      <div class="home-date" id="home-date"></div>
+      <div class="home-greeting" id="home-greeting">Guten Morgen.</div>
+      <div class="pad" style="padding-top:0;">
+        <div class="section-title" style="margin-bottom:12px;">Schnellzugriff</div>
+        <div class="quick-grid">
+          <div class="qa" onclick="openWeltSparring('koerper')"><span class="qa-emoji">💪</span><span class="qa-label">Körper</span><span class="qa-sub">Sparring</span></div>
+          <div class="qa" onclick="openWeltSparring('fuehrung')"><span class="qa-emoji">🏢</span><span class="qa-label">Führung</span><span class="qa-sub">Sparring</span></div>
+          <div class="qa" onclick="openWeltSparring('venture')"><span class="qa-emoji">⚡</span><span class="qa-label">Venture</span><span class="qa-sub">Sparring</span></div>
+          <div class="qa" onclick="showNav('review')"><span class="qa-emoji">🔄</span><span class="qa-label">Review</span><span class="qa-sub">Monatlich</span></div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title">Letzte Einträge</div>
+        <div id="recent-list"></div>
+      </div>
+    </div>
+
+    <!-- WELTEN (Sparring / Journal / Ideen / Regelwerk / Memory) -->
+    <div id="welten-screen" class="screen">
+
+      <!-- SPARRING -->
+      <div id="sparring-screen" class="screen active">
+        <div id="sparring-wrap">
+          <div class="sparring-header">
+            <div class="mentor-label" id="mentor-welt-label">KÖRPER — MENTOR</div>
+            <div class="mentor-name" id="mentor-name-display">Chrissie Wellington</div>
+            <div class="mentor-btns" id="mentor-btns"></div>
+          </div>
+          <div id="chat-msgs"></div>
+          <div class="quick-prompts">
+            <button class="qp" onclick="quickPrompt('Thema und Ziel: Was beschäftigt mich gerade und was will ich am Ende dieses Gesprächs erreicht haben?')">Thema + Ziel</button>
+            <button class="qp" onclick="quickPrompt('Status Check: Wo stehe ich gerade?')">Status</button>
+            <button class="qp" onclick="quickPrompt('Was blockiert mich gerade?')">Blocker</button>
+            <button class="qp" onclick="quickPrompt('Was ist meine nächste Priorität?')">Priorität</button>
+            <button class="qp" onclick="quickPrompt('Ehrliches Feedback zu meinem Fortschritt')">Feedback</button>
+            <button class="qp" onclick="doExtractLog()">Log extrahieren</button>
+          </div>
+          <div id="chat-input-bar">
+            <textarea id="chat-input" rows="1" placeholder="Schreib oder sprich..." oninput="autoResize(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+            <button class="cbtn" id="voice-chat-btn" onclick="toggleVoice('chat-input','voice-chat-btn')">🎤</button>
+            <button class="cbtn primary" onclick="sendMsg()">↑</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div id="journal-screen" class="screen">
+        <div class="pad">
+          <div class="input-card">
+            <textarea id="journal-input" rows="4" placeholder="Was beschäftigt dich heute? Gedanken, Fortschritte, Erkenntnisse..."></textarea>
+            <div class="input-footer">
+              <button class="mic-btn" id="journal-mic" onclick="toggleVoice('journal-input','journal-mic')">🎤 Sprechen</button>
+              <button class="btn btn-primary" onclick="saveJournal()">Speichern</button>
+            </div>
+          </div>
+          <div class="section-title">Einträge</div>
+          <div id="journal-list"></div>
+        </div>
+      </div>
+
+      <!-- IDEEN -->
+      <div id="ideen-screen" class="screen">
+        <div class="pad">
+          <div class="input-card">
+            <textarea id="ideen-input" rows="3" placeholder="Idee notieren..."></textarea>
+            <div class="input-footer">
+              <button class="mic-btn" id="ideen-mic" onclick="toggleVoice('ideen-input','ideen-mic')">🎤 Sprechen</button>
+              <button class="btn btn-primary" onclick="saveIdee()">+ Idee</button>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-full" style="margin-bottom:16px;" onclick="extractIdeen()">✨ KI: Ideen aus Journal extrahieren</button>
+          <div id="ideen-list"></div>
+        </div>
+      </div>
+
+      <!-- REGELWERK -->
+      <div id="regelwerk-screen" class="screen">
+        <div class="pad">
+          <div class="rw-card">
+            <textarea id="rw-input" rows="10" placeholder="Deine Regeln, Prinzipien, Red Lines für diese Welt..." onblur="saveRegelwerk()"></textarea>
+            <div class="rw-footer">
+              <button class="mic-btn" id="rw-mic" onclick="toggleVoice('rw-input','rw-mic')">🎤 Sprechen</button>
+              <button class="btn btn-primary" onclick="saveRegelwerk(true)">Speichern</button>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--text-dim);font-family:'Space Mono',monospace;line-height:1.7;">Wird bei jedem Sparring automatisch mitgeladen.</p>
+        </div>
+      </div>
+
+      <!-- MEMORY -->
+      <div id="memory-screen" class="screen">
+        <div class="pad">
+          <p style="font-size:13px;color:var(--text-mid);line-height:1.6;margin-bottom:16px;">Die KI verdichtet alle Journal-Einträge und Sparring-Gespräche dieser Welt zu einer kompakten Memory. Diese wird beim nächsten Sparring statt dem rohen Log verwendet.</p>
+          <button class="btn btn-secondary btn-full" style="margin-bottom:20px;" onclick="verdichteWelt()">🧠 Welt jetzt verdichten</button>
+          <div class="section-title">Aktuelle Memory</div>
+          <div id="memory-display"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- NORTH STARS -->
+    <div id="northstars-screen" class="screen">
+      <div class="pad">
+        <div class="section-title">North Stars</div>
+        <div class="ns-card ns-y1">
+          <div class="ns-label">⚡ 2026 — Beweis</div>
+          <textarea id="ns-2026" rows="3" placeholder="Was willst du 2026 beweisen?" onblur="saveNS()"></textarea>
+        </div>
+        <div class="ns-card ns-y2">
+          <div class="ns-label">🌱 2027 — Fundament</div>
+          <textarea id="ns-2027" rows="3" placeholder="Was steht 2027?" onblur="saveNS()"></textarea>
+        </div>
+        <div class="ns-card ns-y5">
+          <div class="ns-label">🔥 2032 — Freiheit I</div>
+          <textarea id="ns-2032" rows="3" placeholder="Wo bist du 2032?" onblur="saveNS()"></textarea>
+        </div>
+        <div class="ns-card ns-y10">
+          <div class="ns-label">🌟 2036 — Freiheit II</div>
+          <textarea id="ns-2036" rows="3" placeholder="Wo bist du 2036?" onblur="saveNS()"></textarea>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveNS(true)">North Stars speichern</button>
+      </div>
+    </div>
+
+    <!-- KALENDER -->
+    <div id="kalender-screen" class="screen">
+      <div class="pad">
+        <div class="section-title">Termine & Todos</div>
+        <div class="kal-add">
+          <textarea id="kal-text" rows="2" placeholder="Was? z.B. DEKRA Termin, Solar prüfen, Triathlon Ausrüstung..."></textarea>
+          <div class="kal-row">
+            <input type="date" id="kal-date" style="flex:1;">
+            <button class="mic-btn" id="kal-mic" onclick="toggleVoice('kal-text','kal-mic')">🎤</button>
+            <button class="btn btn-primary" onclick="addKal()">+ Add</button>
+          </div>
+        </div>
+        <div id="kal-list"></div>
+      </div>
+    </div>
+
+    <!-- REVIEW -->
+    <div id="review-screen" class="screen">
+      <div class="pad">
+        <div class="section-title">Monatlicher Review</div>
+        <p style="font-size:13px;color:var(--text-mid);line-height:1.6;margin-bottom:16px;">Die KI zieht aus allen Welten zusammen was gelaufen ist — Erkenntnisse, Fortschritte, offene Punkte — und schlägt vor was an Profil, North Stars und Regelwerk angepasst werden sollte.</p>
+        <button class="btn btn-primary btn-full" style="margin-bottom:20px;" onclick="runReview()">🔄 Review starten</button>
+        <div id="review-result"></div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen">
+      <div class="pad">
+        <div class="section-title">Setup</div>
+
+        <div class="setup-section">
+          <div class="setup-label">Anthropic API Key</div>
+          <input type="password" class="setup-input" id="s-api" placeholder="sk-ant-...">
+          <div class="status-row"><span class="sdot" id="s-api-dot"></span><span class="slabel" id="s-api-lbl">Nicht gesetzt</span></div>
+          <br><button class="btn btn-primary" onclick="saveApiKey()">Speichern</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setup-section">
+          <div class="setup-label">GitHub Token & Gist ID</div>
+          <input type="password" class="setup-input" id="s-token" placeholder="ghp_...">
+          <input type="text" class="setup-input" style="margin-top:8px;" id="s-gist" placeholder="Gist ID">
+          <div class="status-row"><span class="sdot" id="s-gist-dot"></span><span class="slabel" id="s-gist-lbl">Nicht verbunden</span></div>
+          <br><button class="btn btn-primary" onclick="saveGist()">Verbinden</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setup-section">
+          <div class="setup-label">Mein Profil / Kontext</div>
+          <div class="setup-desc">Wer du bist, Status Quo, aktive Projekte. Basis für jedes Sparring.</div>
+          <textarea id="s-profil" rows="6" placeholder="Ich bin Pat..." class="setup-input" onblur="saveProfil()"></textarea>
+          <button class="mic-btn" style="margin-top:8px;" id="profil-mic" onclick="toggleVoice('s-profil','profil-mic')">🎤 Sprechen</button>
+          <br><br><button class="btn btn-primary" onclick="saveProfil(true)">Speichern</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setup-section">
+          <div class="setup-label">Globaler Status</div>
+          <div class="setup-desc">3-5 Sätze — was beeinflusst gerade alle Welten gleichzeitig?</div>
+          <textarea id="s-status" rows="4" placeholder="Triathlon Juli ist der sportliche Anker..." class="setup-input" onblur="saveStatus()"></textarea>
+          <br><button class="btn btn-primary" onclick="saveStatus(true)">Speichern</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setup-section">
+          <div class="setup-label">Mentoren</div>
+          <div id="mentor-edit-area"></div>
+          <button class="btn btn-primary" onclick="saveMentors()">Mentoren speichern</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setup-section">
+          <div class="setup-label">Daten</div>
+          <button class="btn btn-secondary btn-full" style="margin-bottom:8px;" onclick="exportData()">📤 Export (JSON)</button>
+          <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-file').click()">📥 Import (JSON)</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <button class="nav-btn active" data-n="home" onclick="showNav('home')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn" data-n="welten" onclick="showNav('welten')"><span class="nav-icon">🌍</span><span class="nav-label">Welten</span></button>
+    <button class="nav-btn" data-n="northstars" onclick="showNav('northstars')"><span class="nav-icon">⭐</span><span class="nav-label">Ziele</span></button>
+    <button class="nav-btn" data-n="kalender" onclick="showNav('kalender')"><span class="nav-icon">📅</span><span class="nav-label">Kalender</span></button>
+    <button class="nav-btn" data-n="review" onclick="showNav('review')"><span class="nav-icon">🔄</span><span class="nav-label">Review</span></button>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// WELTEN CONFIG
+// ═══════════════════════════════════════════════════════════
+const WELTEN = {
+  koerper:  {label:'Körper',  emoji:'💪', color:'#39FF14'},
+  fuehrung: {label:'Führung', emoji:'🏢', color:'#ffffff'},
+  familie:  {label:'Familie', emoji:'👨‍👩‍👧', color:'#D4A853'},
+  aufbau:   {label:'Aufbau',  emoji:'💰', color:'#C9A84C'},
+  venture:  {label:'Venture', emoji:'⚡', color:'#00D4FF'},
+};
+
+const DEFAULT_MENTOREN = {
+  koerper:  ['Chrissie Wellington','Kobe Bryant'],
+  fuehrung: ['Andy Grove','Pat Lencioni'],
+  familie:  ['Matthew McConaughey','Alain de Botton'],
+  aufbau:   ['Charlie Munger','Howard Marks'],
+  venture:  ['Alex Hormozi','Dan Koe'],
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let S = {
+  apiKey: '', githubToken: '', gistId: '',
+  onboardingDone: false,
+  profil: '', globalStatus: '',
+  northStars: {y2026:'', y2027:'', y2032:'', y2036:''},
+  mentoren: JSON.parse(JSON.stringify(DEFAULT_MENTOREN)),
+  mentorIdx: {koerper:0, fuehrung:0, familie:0, aufbau:0, venture:0},
+  regelwerk: {koerper:'', fuehrung:'', familie:'', aufbau:'', venture:''},
+  weltMemory: {koerper:'', fuehrung:'', familie:'', aufbau:'', venture:''},
+  journal: {koerper:[], fuehrung:[], familie:[], aufbau:[], venture:[]},
+  ideen: {koerper:[], fuehrung:[], familie:[], aufbau:[], venture:[]},
+  chatHistory: {koerper:[], fuehrung:[], familie:[], aufbau:[], venture:[]},
+  kalender: [],
+  currentWelt: 'koerper',
+  currentFeature: 'sparring',
+};
+
+let currentNav = 'home';
+let recognition = null;
+let isRecording = false;
+let activeVoiceId = null;
+let obStep = 0;
+const OB_STEPS = 5;
+
+// ═══════════════════════════════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════════════════════════════
+function saveLocal() {
+  try { localStorage.setItem('lifeos_v4', JSON.stringify(S)); } catch(e){}
+}
+
+function loadLocal() {
+  try {
+    const d = localStorage.getItem('lifeos_v4');
+    if (d) {
+      const p = JSON.parse(d);
+      S = deepMerge(S, p);
+    }
+  } catch(e){}
+}
+
+function deepMerge(target, source) {
+  const out = {...target};
+  for (const k in source) {
+    if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
+      out[k] = deepMerge(target[k] || {}, source[k]);
+    } else {
+      out[k] = source[k];
+    }
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GIST SYNC
+// ═══════════════════════════════════════════════════════════
+function setSyncDot(status) {
+  const d = document.getElementById('sync-dot');
+  d.className = status;
+}
+
+async function syncToGist() {
+  if (!S.githubToken || !S.gistId) return false;
+  setSyncDot('syncing');
+  try {
+    const data = {...S};
+    delete data.apiKey; delete data.githubToken;
+    const r = await fetch(`https://api.github.com/gists/${S.gistId}`, {
+      method:'PATCH',
+      headers:{'Authorization':`token ${S.githubToken}`,'Content-Type':'application/json'},
+      body: JSON.stringify({files:{'lifeos_v4.json':{content:JSON.stringify(data,null,2)}}})
+    });
+    setSyncDot(r.ok ? 'ok' : 'error');
+    return r.ok;
+  } catch(e) { setSyncDot('error'); return false; }
+}
+
+async function syncFromGist() {
+  if (!S.githubToken || !S.gistId) return;
+  setSyncDot('syncing');
+  try {
+    const r = await fetch(`https://api.github.com/gists/${S.gistId}`,{headers:{'Authorization':`token ${S.githubToken}`}});
+    if (!r.ok) { setSyncDot('error'); return; }
+    const data = await r.json();
+    const file = data.files['lifeos_v4.json'];
+    if (file?.content) {
+      const parsed = JSON.parse(file.content);
+      const apiKey = S.apiKey; const token = S.githubToken; const gistId = S.gistId;
+      S = deepMerge(S, parsed);
+      S.apiKey = apiKey; S.githubToken = token; S.gistId = gistId;
+      saveLocal();
+      setSyncDot('ok');
+    }
+  } catch(e) { setSyncDot('error'); }
+}
+
+async function saveSync() { saveLocal(); await syncToGist(); }
+
+// ═══════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════
+function initOnboarding() {
+  if (S.onboardingDone) return;
+  const ob = document.getElementById('onboarding');
+  ob.style.display = 'flex';
+  renderObProgress();
+}
+
+function renderObProgress() {
+  const el = document.getElementById('ob-progress');
+  el.innerHTML = Array.from({length:OB_STEPS},(_,i)=>`<div class="ob-dot ${i<=obStep?'done':''}"></div>`).join('');
+}
+
+function obNext() {
+  if (obStep === 1) {
+    S.apiKey = document.getElementById('ob-api').value.trim();
+    S.githubToken = document.getElementById('ob-token').value.trim();
+    S.gistId = document.getElementById('ob-gist').value.trim();
+    saveLocal();
+  } else if (obStep === 2) {
+    S.profil = document.getElementById('ob-profil').value.trim();
+  } else if (obStep === 3) {
+    const ns = document.getElementById('ob-ns').value.trim();
+    S.northStars.y2026 = ns;
+  } else if (obStep === 4) {
+    S.globalStatus = document.getElementById('ob-status').value.trim();
+  }
+  document.getElementById(`ob-${obStep}`).classList.remove('active');
+  obStep++;
+  document.getElementById(`ob-${obStep}`).classList.add('active');
+  renderObProgress();
+}
+
+async function obFinish() {
+  S.globalStatus = document.getElementById('ob-status').value.trim();
+  S.onboardingDone = true;
+  await saveSync();
+  document.getElementById('onboarding').style.display = 'none';
+  showToast('Life OS bereit ✓');
+  renderHome();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showNav(nav) {
+  currentNav = nav;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.n === nav));
+  const screens = ['home','welten','northstars','kalender','review','setup'];
+  screens.forEach(s => {
+    const el = document.getElementById(s+'-screen');
+    if(el) el.classList.toggle('active', s === nav);
+  });
+  const wb = document.getElementById('welten-bar');
+  const ft = document.getElementById('feature-tabs');
+  wb.classList.toggle('visible', nav === 'welten');
+  ft.classList.toggle('visible', nav === 'welten');
+
+  const hc = document.getElementById('header-center');
+  if (nav === 'welten') {
+    const w = WELTEN[S.currentWelt];
+    hc.textContent = w.emoji + ' ' + w.label;
+    hc.style.color = w.color;
+    renderFeature(S.currentFeature);
+  } else {
+    const labels = {home:'—', northstars:'⭐ Ziele', kalender:'📅 Kalender', review:'🔄 Review', setup:'⚙ Setup'};
+    hc.textContent = labels[nav] || '—';
+    hc.style.color = 'var(--text-dim)';
+  }
+
+  if (nav === 'home') renderHome();
+  else if (nav === 'northstars') renderNS();
+  else if (nav === 'kalender') renderKal();
+  else if (nav === 'setup') renderSetup();
+}
+
+function selectWelt(w) {
+  S.currentWelt = w;
+  document.querySelectorAll('.welt-tab').forEach(t => t.classList.toggle('active', t.dataset.w === w));
+  const welt = WELTEN[w];
+  const hc = document.getElementById('header-center');
+  hc.textContent = welt.emoji + ' ' + welt.label;
+  hc.style.color = welt.color;
+  renderFeature(S.currentFeature);
+}
+
+function selectFeature(f) {
+  S.currentFeature = f;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.toggle('active', t.dataset.f === f));
+  renderFeature(f);
+}
+
+function renderFeature(f) {
+  ['sparring','journal','ideen','regelwerk','memory'].forEach(x => {
+    const el = document.getElementById(x+'-screen');
+    if(el) el.classList.toggle('active', x === f);
+  });
+  if (f==='sparring') renderSparring();
+  else if (f==='journal') renderJournal();
+  else if (f==='ideen') renderIdeen();
+  else if (f==='regelwerk') renderRegelwerk();
+  else if (f==='memory') renderMemory();
+}
+
+function openWeltSparring(w) {
+  S.currentWelt = w;
+  S.currentFeature = 'sparring';
+  showNav('welten');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════════
+function renderHome() {
+  const now = new Date();
+  document.getElementById('home-date').textContent = now.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const h = now.getHours();
+  document.getElementById('home-greeting').textContent = h<12?'Guten Morgen.':h<18?'Guten Tag.':'Guten Abend.';
+
+  let all = [];
+  Object.keys(S.journal).forEach(w => (S.journal[w]||[]).forEach(e => all.push({...e,welt:w})));
+  all.sort((a,b) => new Date(b.date)-new Date(a.date));
+  const el = document.getElementById('recent-list');
+  if (!all.length) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-icon">📝</span>Noch keine Einträge.</div>`;
+    return;
+  }
+  el.innerHTML = all.slice(0,4).map(e => `
+    <div class="entry-preview" onclick="openWeltJournal('${e.welt}')">
+      <div class="entry-meta">${WELTEN[e.welt]?.emoji||''} ${WELTEN[e.welt]?.label||e.welt} · ${fmtDate(e.date)}</div>
+      ${e.text.substring(0,120)}${e.text.length>120?'...':''}
+    </div>`).join('');
+}
+
+function openWeltJournal(w) { S.currentWelt=w; S.currentFeature='journal'; showNav('welten'); }
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEM PROMPT BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildSystemPrompt(welt) {
+  const w = S.currentWelt;
+  const mentor = S.mentoren[w]?.[S.mentorIdx[w]||0] || 'KI Mentor';
+  const today = new Date().toLocaleDateString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const recentJournal = (S.journal[w]||[]).slice(-8).map(e=>`[${fmtDate(e.date)}] ${e.text}`).join('\n');
+  const memory = S.weltMemory[w] || '';
+
+  return `Du bist ein KI-Mentor in der Life OS App. Heute ist ${today}.
+
+═══ PROFIL ═══
+${S.profil || '(noch nicht befüllt)'}
+
+═══ GLOBALER STATUS ═══
+${S.globalStatus || '(noch nicht befüllt)'}
+
+═══ NORTH STARS ═══
+2026 — Beweis: ${S.northStars.y2026 || '(nicht gesetzt)'}
+2027 — Fundament: ${S.northStars.y2027 || '(nicht gesetzt)'}
+2032 — Freiheit I: ${S.northStars.y2032 || '(nicht gesetzt)'}
+2036 — Freiheit II: ${S.northStars.y2036 || '(nicht gesetzt)'}
+
+═══ AKTUELLE WELT: ${WELTEN[w]?.label} ═══
+MENTOR: ${mentor}
+
+REGELWERK:
+${S.regelwerk[w] || '(noch kein Regelwerk)'}
+
+WELT-MEMORY (verdichtete Erkenntnisse):
+${memory || '(noch keine Memory — wird nach erstem Verdichten befüllt)'}
+
+LETZTE JOURNAL-EINTRÄGE:
+${recentJournal || '(keine Einträge)'}
+
+═══ ANWEISUNG ═══
+Du sprichst im Stil von ${mentor}. Direkt, klar, kein Bullshit.
+Nutze das Regelwerk als Maßstab. Referenziere North Stars wenn relevant.
+Nutze das aktuelle Datum — keine falschen Zeitangaben.
+Verlass dich auf die Memory für ältere Erkenntnisse, auf den Journal für aktuelle Einträge.
+Wenn Informationen in Journal und Memory widersprüchlich sind — der neuere Journal-Eintrag gilt.
+Antworte auf Deutsch. Keine langen Einleitungen.`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SPARRING
+// ═══════════════════════════════════════════════════════════
+function renderSparring() {
+  const w = S.currentWelt;
+  const idx = S.mentorIdx[w]||0;
+  const mentoren = S.mentoren[w]||[];
+  document.getElementById('mentor-welt-label').textContent = (WELTEN[w]?.label||w).toUpperCase()+' — MENTOR';
+  document.getElementById('mentor-name-display').textContent = mentoren[idx]||'';
+  document.getElementById('mentor-btns').innerHTML = mentoren.map((m,i)=>
+    `<button class="mbtn ${i===idx?'active':''}" onclick="selectMentor(${i})">${m}</button>`).join('');
+  renderChatMsgs();
+}
+
+function selectMentor(i) {
+  S.currentMentorIdx = S.mentorIdx; // ensure
+  S.mentorIdx[S.currentWelt] = i;
+  document.getElementById('mentor-name-display').textContent = S.mentoren[S.currentWelt][i]||'';
+  document.querySelectorAll('.mbtn').forEach((b,j)=>b.classList.toggle('active',j===i));
+}
+
+function renderChatMsgs() {
+  const w = S.currentWelt;
+  const hist = (S.chatHistory[w]||[]);
+  const el = document.getElementById('chat-msgs');
+  if (!hist.length) {
+    const mentor = S.mentoren[w]?.[S.mentorIdx[w]||0]||'KI Mentor';
+    el.innerHTML = `<div class="empty-state"><span class="empty-icon">${WELTEN[w]?.emoji||'🤖'}</span>${mentor} wartet.<br>Was beschäftigt dich?</div>`;
+    return;
+  }
+  el.innerHTML = hist.map(m=>`
+    <div class="msg ${m.role==='user'?'user':'ai'}">
+      <div class="msg-bubble">${fmtMsg(m.content)}</div>
+      ${m.time?`<div class="msg-time">${m.time}</div>`:''}
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function fmtMsg(t) {
+  return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  if (!S.apiKey) { showToast('API Key fehlt → Setup'); return; }
+  inp.value = ''; inp.style.height = 'auto';
+
+  const w = S.currentWelt;
+  if (!S.chatHistory[w]) S.chatHistory[w] = [];
+  const now = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  S.chatHistory[w].push({role:'user', content:text, time:now});
+  renderChatMsgs();
+
+  const el = document.getElementById('chat-msgs');
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+  el.appendChild(typing);
+  el.scrollTop = el.scrollHeight;
+
+  try {
+    const messages = (S.chatHistory[w]||[]).map(m=>({role:m.role==='user'?'user':'assistant', content:m.content}));
+    const resp = await callAPI(buildSystemPrompt(w), messages);
+    typing.remove();
+    S.chatHistory[w].push({role:'assistant', content:resp, time:now});
+    renderChatMsgs();
+    await saveSync();
+  } catch(e) {
+    typing.remove();
+    S.chatHistory[w].push({role:'assistant', content:`Fehler: ${e.message}`, time:now});
+    renderChatMsgs();
+  }
+}
+
+async function quickPrompt(p) {
+  document.getElementById('chat-input').value = p;
+  await sendMsg();
+}
+
+async function doExtractLog() {
+  const w = S.currentWelt;
+  if (!S.apiKey) { showToast('API Key fehlt'); return; }
+  const j = (S.journal[w]||[]).map(e=>`${fmtDate(e.date)}: ${e.text}`).join('\n\n');
+  const c = (S.chatHistory[w]||[]).map(m=>`${m.role==='user'?'Pat':'Mentor'}: ${m.content}`).join('\n\n');
+  if (!j && !c) { showToast('Kein Log vorhanden'); return; }
+  document.getElementById('chat-input').value = `Extrahiere und fasse zusammen: Was waren meine wichtigsten Erkenntnisse, Fortschritte und offene Punkte in der Welt ${WELTEN[w]?.label}? Nutze Journal und Sparring-History.`;
+  await sendMsg();
+}
+
+// ═══════════════════════════════════════════════════════════
+// JOURNAL
+// ═══════════════════════════════════════════════════════════
+function renderJournal() {
+  const w = S.currentWelt;
+  document.getElementById('journal-input').value = '';
+  const entries = [...(S.journal[w]||[])].reverse();
+  const el = document.getElementById('journal-list');
+  if (!entries.length) { el.innerHTML=`<div class="empty-state"><span class="empty-icon">📓</span>Noch keine Einträge.</div>`; return; }
+  el.innerHTML = entries.map(e=>`
+    <div class="entry-card">
+      <div class="entry-date">${fmtDate(e.date)}</div>
+      <div class="entry-text">${e.text.replace(/\n/g,'<br>')}</div>
+      <button class="del-btn" onclick="delJournal('${e.id}')">×</button>
+    </div>`).join('');
+}
+
+async function saveJournal() {
+  const text = document.getElementById('journal-input').value.trim();
+  if (!text) return;
+  const w = S.currentWelt;
+  if (!S.journal[w]) S.journal[w] = [];
+  S.journal[w].push({id:Date.now().toString(), date:new Date().toISOString(), text});
+  document.getElementById('journal-input').value = '';
+  renderJournal();
+  showToast('Gespeichert ✓');
+  await saveSync();
+}
+
+function delJournal(id) {
+  const w = S.currentWelt;
+  S.journal[w] = (S.journal[w]||[]).filter(e=>e.id!==id);
+  renderJournal(); saveSync();
+}
+
+// ═══════════════════════════════════════════════════════════
+// IDEEN
+// ═══════════════════════════════════════════════════════════
+function renderIdeen() {
+  const w = S.currentWelt;
+  document.getElementById('ideen-input').value = '';
+  const ideen = [...(S.ideen[w]||[])].reverse();
+  const el = document.getElementById('ideen-list');
+  if (!ideen.length) { el.innerHTML=`<div class="empty-state"><span class="empty-icon">💡</span>Noch keine Ideen.</div>`; return; }
+  el.innerHTML = ideen.map(i=>`
+    <div class="entry-card">
+      <div class="idee-titel">${i.titel||'Idee'}</div>
+      <div class="idee-text">${i.text}</div>
+      <div class="entry-date" style="margin-top:6px;">${fmtDate(i.date)}</div>
+      <button class="del-btn" onclick="delIdee('${i.id}')">×</button>
+    </div>`).join('');
+}
+
+async function saveIdee() {
+  const text = document.getElementById('ideen-input').value.trim();
+  if (!text) return;
+  const w = S.currentWelt;
+  if (!S.ideen[w]) S.ideen[w] = [];
+  S.ideen[w].push({id:Date.now().toString(), date:new Date().toISOString(), titel:text.split(/[.!?]/)[0].substring(0,50), text});
+  document.getElementById('ideen-input').value = '';
+  renderIdeen(); showToast('Idee gespeichert ✓'); await saveSync();
+}
+
+function delIdee(id) {
+  const w = S.currentWelt;
+  S.ideen[w] = (S.ideen[w]||[]).filter(i=>i.id!==id);
+  renderIdeen(); saveSync();
+}
+
+async function extractIdeen() {
+  const w = S.currentWelt;
+  if (!S.apiKey) { showToast('API Key fehlt'); return; }
+  const j = (S.journal[w]||[]).map(e=>e.text).join('\n\n');
+  if (!j) { showToast('Kein Journal vorhanden'); return; }
+  showToast('KI extrahiert...');
+  try {
+    const sys = `Extrahiere Ideen aus Journal-Text. Antworte NUR mit JSON: {"ideen":[{"titel":"...","text":"..."}]}. Kein anderer Text.`;
+    const resp = await callAPI(sys, [{role:'user',content:`Welt: ${WELTEN[w]?.label}\n\n${j}`}]);
+    const parsed = JSON.parse(resp.replace(/```json|```/g,'').trim());
+    if (parsed.ideen) {
+      parsed.ideen.forEach(i => {
+        S.ideen[w].unshift({id:Date.now().toString()+Math.random(), date:new Date().toISOString(), titel:i.titel, text:i.text});
+      });
+      renderIdeen(); showToast(`${parsed.ideen.length} Ideen ✓`); await saveSync();
+    }
+  } catch(e) { showToast('Fehler beim Extrahieren'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// REGELWERK
+// ═══════════════════════════════════════════════════════════
+function renderRegelwerk() {
+  document.getElementById('rw-input').value = S.regelwerk[S.currentWelt]||'';
+}
+
+async function saveRegelwerk(show) {
+  S.regelwerk[S.currentWelt] = document.getElementById('rw-input').value;
+  await saveSync();
+  if (show) showToast('Regelwerk gespeichert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEMORY (Verdichten)
+// ═══════════════════════════════════════════════════════════
+function renderMemory() {
+  const w = S.currentWelt;
+  const el = document.getElementById('memory-display');
+  const mem = S.weltMemory[w];
+  if (!mem) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-icon">🧠</span>Noch keine Memory.<br>Drücke "Welt verdichten".</div>`;
+  } else {
+    el.innerHTML = `<div class="card"><div class="card-label">Letzte Verdichtung</div><div style="font-size:13px;line-height:1.7;white-space:pre-wrap;">${mem}</div></div>`;
+  }
+}
+
+async function verdichteWelt() {
+  const w = S.currentWelt;
+  if (!S.apiKey) { showToast('API Key fehlt'); return; }
+
+  const journal = (S.journal[w]||[]).map(e=>`[${fmtDate(e.date)}] ${e.text}`).join('\n\n');
+  const chat = (S.chatHistory[w]||[]).map(m=>`${m.role==='user'?'Pat':'Mentor'}: ${m.content}`).join('\n\n');
+  const oldMem = S.weltMemory[w]||'';
+
+  if (!journal && !chat) { showToast('Kein Content zum Verdichten'); return; }
+
+  showToast('Verdichte...');
+  document.getElementById('memory-display').innerHTML = `<div class="empty-state"><span class="spinner"></span>Wird verdichtet...</div>`;
+
+  try {
+    const sys = `Du verdichtest alle Informationen einer Welt zu einer kompakten, strukturierten Memory.
+Regeln:
+- Behalte nur was noch relevant und aktuell ist
+- Schmeiss Veraltetes raus (alte Zeitangaben, abgeschlossene Themen)
+- Neue Information aus Journal/Chat schlägt alte Memory
+- Strukturiere nach: Status, Erkenntnisse, Offene Punkte
+- Maximal 400 Wörter
+- Antworte NUR mit der Memory, kein anderer Text`;
+
+    const content = `Welt: ${WELTEN[w]?.label}
+Heute: ${new Date().toLocaleDateString('de-DE')}
+
+ALTE MEMORY:
+${oldMem || '(keine)'}
+
+JOURNAL-EINTRÄGE:
+${journal || '(keine)'}
+
+SPARRING-HISTORY:
+${chat || '(keine)'}`;
+
+    const resp = await callAPI(sys, [{role:'user',content}]);
+    S.weltMemory[w] = resp;
+    renderMemory();
+    showToast('Verdichtet ✓');
+    await saveSync();
+  } catch(e) { showToast('Fehler: '+e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// NORTH STARS
+// ═══════════════════════════════════════════════════════════
+function renderNS() {
+  document.getElementById('ns-2026').value = S.northStars.y2026||'';
+  document.getElementById('ns-2027').value = S.northStars.y2027||'';
+  document.getElementById('ns-2032').value = S.northStars.y2032||'';
+  document.getElementById('ns-2036').value = S.northStars.y2036||'';
+}
+
+async function saveNS(show) {
+  S.northStars.y2026 = document.getElementById('ns-2026').value;
+  S.northStars.y2027 = document.getElementById('ns-2027').value;
+  S.northStars.y2032 = document.getElementById('ns-2032').value;
+  S.northStars.y2036 = document.getElementById('ns-2036').value;
+  await saveSync();
+  if (show) showToast('North Stars gespeichert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// KALENDER
+// ═══════════════════════════════════════════════════════════
+function renderKal() {
+  document.getElementById('kal-date').value = new Date().toISOString().split('T')[0];
+  const items = [...(S.kalender||[])].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const el = document.getElementById('kal-list');
+  if (!items.length) { el.innerHTML=`<div class="empty-state"><span class="empty-icon">📅</span>Keine Termine.</div>`; return; }
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const up = items.filter(i=>new Date(i.date)>=now);
+  const past = items.filter(i=>new Date(i.date)<now);
+
+  let html = '';
+  if (up.length) { html+=`<div class="kal-group-title">Kommend</div>`+up.map(kalHTML).join(''); }
+  if (past.length) { html+=`<div class="kal-group-title">Vergangen</div>`+past.map(kalHTML).join(''); }
+  el.innerHTML = html;
+}
+
+function kalHTML(i) {
+  const d = new Date(i.date);
+  return `<div class="kal-item">
+    <div class="kal-date">${d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})}</div>
+    <div class="kal-text">${i.text}</div>
+    <button class="kal-del" onclick="delKal('${i.id}')">×</button>
+  </div>`;
+}
+
+async function addKal() {
+  const text = document.getElementById('kal-text').value.trim();
+  const date = document.getElementById('kal-date').value;
+  if (!text||!date) { showToast('Text und Datum eingeben'); return; }
+  if (!S.kalender) S.kalender=[];
+  S.kalender.push({id:Date.now().toString(), text, date});
+  document.getElementById('kal-text').value='';
+  renderKal(); showToast('Hinzugefügt ✓'); await saveSync();
+}
+
+function delKal(id) { S.kalender=(S.kalender||[]).filter(i=>i.id!==id); renderKal(); saveSync(); }
+
+// ═══════════════════════════════════════════════════════════
+// MONATLICHER REVIEW
+// ═══════════════════════════════════════════════════════════
+async function runReview() {
+  if (!S.apiKey) { showToast('API Key fehlt'); return; }
+  const el = document.getElementById('review-result');
+  el.innerHTML = `<div class="empty-state"><span class="spinner"></span>Review läuft...</div>`;
+
+  let allContent = '';
+  Object.keys(WELTEN).forEach(w => {
+    const j = (S.journal[w]||[]).slice(-5).map(e=>`[${fmtDate(e.date)}] ${e.text}`).join('\n');
+    const m = S.weltMemory[w]||'';
+    allContent += `\n\n=== ${WELTEN[w].label} ===\nMemory: ${m||'keine'}\nLetzte Einträge:\n${j||'keine'}`;
+  });
+
+  const sys = `Du machst einen monatlichen Review für Pat. Analysiere alle Welten und gib strukturiertes Feedback.
+Format:
+1. WAS WURDE ERREICHT (pro Welt kurz)
+2. WAS HAT SICH VERÄNDERT
+3. OFFENE PUNKTE
+4. VORSCHLÄGE für Profil-Update (ja/nein + was)
+5. VORSCHLÄGE für North Stars Update (ja/nein + was)  
+6. VORSCHLÄGE für Regelwerk Updates (pro Welt)
+
+Heute: ${new Date().toLocaleDateString('de-DE')}
+Sei direkt und konkret. Antworte auf Deutsch.`;
+
+  try {
+    const resp = await callAPI(sys, [{role:'user',content:`Profil: ${S.profil}\n\nNorth Stars: ${JSON.stringify(S.northStars)}\n\nGlobaler Status: ${S.globalStatus}\n\nWelten-Content:${allContent}`}]);
+    el.innerHTML = `<div class="review-card"><div class="review-result">${fmtMsg(resp)}</div></div>`;
+  } catch(e) { el.innerHTML=`<div class="empty-state">Fehler: ${e.message}</div>`; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════════════════
+function renderSetup() {
+  if (S.apiKey) { document.getElementById('s-api').value=S.apiKey; document.getElementById('s-api-dot').className='sdot ok'; document.getElementById('s-api-lbl').textContent='Verbunden'; }
+  if (S.githubToken) document.getElementById('s-token').value=S.githubToken;
+  if (S.gistId) document.getElementById('s-gist').value=S.gistId;
+  if (S.githubToken&&S.gistId) { document.getElementById('s-gist-dot').className='sdot ok'; document.getElementById('s-gist-lbl').textContent='Verbunden'; }
+  document.getElementById('s-profil').value = S.profil||'';
+  document.getElementById('s-status').value = S.globalStatus||'';
+
+  const area = document.getElementById('mentor-edit-area');
+  area.innerHTML = Object.keys(WELTEN).map(w=>`
+    <div style="margin-bottom:12px;">
+      <div class="setup-label" style="margin-bottom:5px;">${WELTEN[w].emoji} ${WELTEN[w].label}</div>
+      <div class="mentor-grid">
+        <div class="mentor-item"><div class="mentor-item-label">Mentor 1</div><input id="m-${w}-0" value="${S.mentoren[w]?.[0]||''}"></div>
+        <div class="mentor-item"><div class="mentor-item-label">Mentor 2</div><input id="m-${w}-1" value="${S.mentoren[w]?.[1]||''}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function saveApiKey() {
+  S.apiKey = document.getElementById('s-api').value.trim();
+  saveLocal();
+  document.getElementById('s-api-dot').className = S.apiKey?'sdot ok':'sdot';
+  document.getElementById('s-api-lbl').textContent = S.apiKey?'Verbunden':'Nicht gesetzt';
+  showToast('API Key gespeichert ✓');
+}
+
+async function saveGist() {
+  S.githubToken = document.getElementById('s-token').value.trim();
+  S.gistId = document.getElementById('s-gist').value.trim();
+  saveLocal();
+  document.getElementById('s-gist-dot').className='sdot syncing';
+  document.getElementById('s-gist-lbl').textContent='Verbinde...';
+  const ok = await syncToGist();
+  document.getElementById('s-gist-dot').className = ok?'sdot ok':'sdot error';
+  document.getElementById('s-gist-lbl').textContent = ok?'Verbunden ✓':'Fehler — Token/ID prüfen';
+  showToast(ok?'Verbunden ✓':'Fehler');
+}
+
+async function saveProfil(show) {
+  S.profil = document.getElementById('s-profil').value;
+  await saveSync(); if(show) showToast('Profil gespeichert ✓');
+}
+
+async function saveStatus(show) {
+  S.globalStatus = document.getElementById('s-status').value;
+  await saveSync(); if(show) showToast('Status gespeichert ✓');
+}
+
+async function saveMentors() {
+  Object.keys(WELTEN).forEach(w => {
+    S.mentoren[w] = [
+      document.getElementById(`m-${w}-0`)?.value||'',
+      document.getElementById(`m-${w}-1`)?.value||'',
+    ];
+  });
+  await saveSync(); showToast('Mentoren gespeichert ✓');
+}
+
+// ═══════════════════════════════════════════════════════════
+// API CALL
+// ═══════════════════════════════════════════════════════════
+async function callAPI(system, messages) {
+  const r = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':S.apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true',
+    },
+    body:JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1500, system, messages})
+  });
+  if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'API Fehler'); }
+  const d = await r.json();
+  return d.content[0]?.text||'';
+}
+
+// ═══════════════════════════════════════════════════════════
+// VOICE
+// ═══════════════════════════════════════════════════════════
+function initVoice() {
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.lang='de-DE'; recognition.continuous=false; recognition.interimResults=false;
+  recognition.onresult = e => {
+    const t = e.results[0][0].transcript;
+    if (activeVoiceId) {
+      const el = document.getElementById(activeVoiceId);
+      if (el) { el.value += (el.value?' ':'')+t; autoResize(el); }
+    }
+    stopVoice();
+  };
+  recognition.onerror = stopVoice;
+  recognition.onend = stopVoice;
+}
+
+function toggleVoice(targetId, btnId) {
+  if (isRecording) { stopVoice(); return; }
+  if (!recognition) { showToast('Sprache nicht verfügbar'); return; }
+  activeVoiceId = targetId;
+  isRecording = true;
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('recording');
+  try { recognition.start(); } catch(e){}
+}
+
+function stopVoice() {
+  isRecording = false;
+  activeVoiceId = null;
+  document.querySelectorAll('.mic-btn,.cbtn').forEach(b=>b.classList.remove('recording'));
+  try { recognition.stop(); } catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════
+function exportData() {
+  const d={...S}; delete d.apiKey; delete d.githubToken;
+  const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`lifeos_${new Date().toISOString().split('T')[0]}.json`; a.click();
+}
+
+function handleImport(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      const p=JSON.parse(ev.target.result);
+      const apiKey=S.apiKey; const token=S.githubToken; const gist=S.gistId;
+      S=deepMerge(S,p); S.apiKey=apiKey; S.githubToken=token; S.gistId=gist;
+      saveLocal(); showToast('Import ✓'); renderHome();
+    } catch { showToast('Import fehlgeschlagen'); }
+  };
+  r.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function autoResize(el) {
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+let toastT;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+loadLocal();
+initVoice();
+
+if (!S.onboardingDone) {
+  document.getElementById('onboarding').style.display='flex';
+  renderObProgress();
+} else {
+  if (S.githubToken && S.gistId) {
+    syncFromGist().then(()=>{ renderHome(); renderSetup(); });
+  } else {
+    renderHome();
+  }
+}
+
+</script>
+</body>
+</html>
